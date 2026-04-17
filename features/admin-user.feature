@@ -19,3 +19,8 @@ Feature: Admin user
     Given a common admin (not the superadmin) tries to remove another admin
     When the common admin confirms the removal action
     Then the system blocks the action and both admins remain active
+
+  Scenario: admin tries to register an artist without a name and is rejected
+    Given the admin opens the artist registration form
+    When the admin submits the form with an empty name field
+    Then the system rejects the submission and shows a required field message
