@@ -14,3 +14,9 @@ Feature: Content Search
 		When I search for the term "Vingadoes"
 		Then I can see a "No results found" screen
 		And no works are returned for the searched term
+
+	Scenario: search content with a non-existent term
+		Given the system has some content stored
+		When I search for the term "UnknownTitle123"
+		Then I can see a "No results found" screen
+		And no works are returned for the searched term
