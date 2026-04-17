@@ -14,3 +14,8 @@ Feature: Admin user
     Given the admin publishes a news post with free tags
     When the news post is created
     Then the news post shows up on the common users feed with its tags highlighted
+
+  Scenario: common admin tries to remove another admin and is blocked
+    Given a common admin (not the superadmin) tries to remove another admin
+    When the common admin confirms the removal action
+    Then the system blocks the action and both admins remain active
