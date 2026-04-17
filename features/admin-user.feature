@@ -13,4 +13,4 @@ Feature: Admin user
   Scenario: create a news post with tags and see it on the feed
     Given the admin publishes a news post with free tags
     When the news post is created
-    Then the news post shows up on the common users feed
+    Then the news post shows up on the common users feed with its tags highlighted
