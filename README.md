@@ -13,3 +13,7 @@ Criar uma aplicação que permita o compartilhamento de opiniões sobre diferent
 | Fórum | Criar posts; Comentar em posts; Categorizar/buscar posts por tópico. (Pode ter só um único usuário cadastrado que faz essas ações, não precisa criar cadastro de usuário) |
 | Conteúdo | Mostrar reviews, notas; Cadastro de conteúdo (gênero, episódios, capítulos, duração, ano etc); Mostrar onde está disponível para compra/assistir/ler; Remoção, edição; Manutenção de reviews (criar, editar e remover) |
 | Análise de tendências/Busca por conteúdo | Página inicial/Feed; Em alta; Mais vistos/lidos; Mais bem avaliados; Buscas com filtros |
+
+## Equipe
+
+Feature Usuário Administrador: Gabriel Nogueira de Moura Pereira.
