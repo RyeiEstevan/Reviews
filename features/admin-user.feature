@@ -24,3 +24,4 @@ Feature: Admin user
     Given the admin opens the artist registration form
     When the admin submits the form with an empty name field
     Then the system rejects the submission and shows a required field message
+    And the form keeps the values the admin already filled for the other fields
