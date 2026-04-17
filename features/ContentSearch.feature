@@ -14,3 +14,4 @@ Feature: Content Search
 		When I search for the term "Vingadoes"
 		Then I can see a "No results found" screen
 		And no works are returned for the searched term
+		And I can still see the searched term "Vingadoes" in the search bar
