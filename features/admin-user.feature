@@ -38,3 +38,8 @@ Feature: Admin user
     Then the user record is updated with the new email
     And the user receives a confirmation email with a verification link
     And the audit log stores the admin username, the old email and the new email
+
+  Scenario: admin registers a new voice actor successfully
+    Given the admin opens the artist registration form
+    When the admin fills the name, role voice-actor and confirms
+    Then the system persists the new voice actor in the catalog
