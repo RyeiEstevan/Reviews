@@ -48,3 +48,8 @@ Feature: Admin user
     Given the admin selects a common user with status active
     When the admin confirms the permanent account deletion
     Then the user account is removed and their content becomes inaccessible
+
+  Scenario: admin promotes a common user to moderator
+    Given the admin selects a common user with good standing
+    When the admin confirms the promotion to moderator
+    Then the user receives moderator privileges and is notified by email
