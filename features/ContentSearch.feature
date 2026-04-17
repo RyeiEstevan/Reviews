@@ -15,3 +15,14 @@ Feature: Content Search
 		Then I can see a "No results found" screen
 		And no works are returned for the searched term
 		And I can still see the searched term "Vingadoes" in the search bar
+
+	Scenario: search content with a non-existent term
+		Given the system has some content stored
+		When I search for the term "UnknownTitle123"
+		Then I can see a "No results found" screen
+		And no works are returned for the searched term
+
+	Scenario: search content by title
+		Given the system has some content stored
+		When I search for the term "Titanic"
+		Then I can see works that match the searched term
