@@ -5,7 +5,7 @@ Feature: Content Search
 
 	Scenario: search content by exact match
 		Given the system has some content stored
-		When I search for the term "Avengers"
+		When I search for the term "Avengers: Endgame"
 		Then I can see the list of works that exactly match the searched term
 		And the returned results contain works with the term in the title, synopsis, or description
 
