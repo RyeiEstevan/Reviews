@@ -32,10 +32,9 @@ And retorna um conjunto de dados vazio (empty set) em vez de listar obras com qu
 And o sistema escreve um Registro de "Insufficient Data for Ranking" para monitoramento.
 
 Scenario: Falha de Relevância por Janela Temporal Expirada
-Given que a obra "Sucesso de Bilheteria 1990" tem 1 milhão de avaliações históricas e 0 recentes
-And a obra "Indie Viral" tem 1.000 avaliações, todas registradas nas últimas 24 horas
-When o serviço recebe uma requisição para processar o ranking "Em Alta" com janela de 7 dias
-But ocorre uma falha na cláusula WHERE do banco de dados, ignorando o filtro de data
-Than o serviço processa erroneamente o total acumulado (all-time) em vez do temporal
-And retorna a obra "Sucesso de Bilheteria 1990" no topo, falhando no objetivo do ranking "Em Alta"
-And dispara um alerta de inconsistência de regra de negócio.
+Given que a obra "Sucesso de Bilheteria 1990" possui 1.000.000 de avaliações totais e 0 avaliações nos últimos 7 dias
+And a obra "Indie Viral" possui 1.000 avaliações, todas registradas nas últimas 24 horas
+When o serviço processa o ranking "Em Alta" ignorando incorretamente o filtro de data
+Than o sistema deve identificar a inconsistência entre o volume total e o volume temporal
+And a obra "Sucesso de Bilheteria 1990" não deve constar no topo do ranking "Em Alta"
+And um alerta de "Inconsistência de Regra de Negócio" deve ser registrado nos registros.
