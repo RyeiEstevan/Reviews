@@ -20,7 +20,7 @@ And a regra do serviço exige um quórum mínimo de 50 avaliações para o ranki
 When o serviço recebe uma requisição para gerar a lista de "Mais Bem Avaliados"
 Than o serviço processa a validação e identifica que nenhuma obra atingiu o threshold
 And retorna um conjunto de dados vazio (empty set) em vez de listar obras com quórum baixo
-And o sistema registra um Log de "Insufficient Data for Ranking" para monitoramento.
+And o sistema registra um Registro de "Insufficient Data for Ranking" para monitoramento.
 
 Scenario: Falha de Relevância por Janela Temporal Expirada
 Given que a obra "Sucesso de Bilheteria 1990" tem 1 milhão de avaliações históricas e 0 recentes
