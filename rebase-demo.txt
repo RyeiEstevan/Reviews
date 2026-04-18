@@ -1,2 +1,3 @@
 main commit: add independent line
 dev commit 1: add baseline line
+dev commit 2: append second line
