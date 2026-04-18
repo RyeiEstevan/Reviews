@@ -27,3 +27,5 @@ When eu preencho os campos de título, gênero, ano de lançamento e duração
 And eu clico no botão "Salvar"
 Then o sistema deve confirmar o salvamento dos dados com sucesso
 And o novo conteúdo deve passar a ser listado no catálogo geral do sistema
+
+teste 3
