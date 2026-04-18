@@ -14,13 +14,22 @@ When o serviço recebe uma requisição para processar o ranking "Em Alta" consi
 Than o serviço realiza a consulta filtrando as interações apenas pelo período recente
 And retorna a lista de resultados classificando a obra "Lançamento Recente" em uma posição superior à obra "Clássico Antigo".
 
+Scenario: Segmentação Regional no Ranking de Popularidade
+Given que a obra "Blockbuster Mundial" é a mais assistida globalmente, mas possui baixa tração no Brasil
+And a obra "Série Nacional" teve 50.000 visualizações concentradas apenas em território brasileiro nas últimas 48 horas
+When o serviço recebe uma requisição de ranking "Populares na Sua Região" com o header Accept-Language: pt-BR
+Than o serviço aplica o filtro geográfico cruzando os metadados de acesso
+And processa o cálculo de relevância local priorizando o volume regional
+And retorna o conjunto de dados com a obra "Série Nacional" na primeira posição
+And garante que o conteúdo entregue é culturalmente relevante para o usuário final.
+
 Scenario: Falha de Quórum por Volume Insuficiente
 Given que o banco de dados contém apenas obras com menos de 50 avaliações cada
 And a regra do serviço exige um quórum mínimo de 50 avaliações para o ranking
 When o serviço recebe uma requisição para gerar a lista de "Mais Bem Avaliados"
 Than o serviço processa a validação e identifica que nenhuma obra atingiu o threshold
 And retorna um conjunto de dados vazio (empty set) em vez de listar obras com quórum baixo
-And o sistema registra um Registro de "Insufficient Data for Ranking" para monitoramento.
+And o sistema escreve um Registro de "Insufficient Data for Ranking" para monitoramento.
 
 Scenario: Falha de Relevância por Janela Temporal Expirada
 Given que a obra "Sucesso de Bilheteria 1990" tem 1 milhão de avaliações históricas e 0 recentes
