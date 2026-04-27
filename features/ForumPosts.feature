@@ -26,3 +26,10 @@ And eu seleciono para publicar
 Then eu vejo uma mensagem de erro indicando que o título é obrigatório
 And eu vejo que o post não foi publicado
 And eu vejo que os campos que foram preenchidos permanecem com os dados correspondentes
+
+
+Scenario: Exclusao de post por usuário
+Given estou logado como o usuário "Pedro123"
+And existe o post "Review Ratatouille" postado por "Pedro123"
+When eu tento excluir o post "Review Ratatouille"
+Then eu vejo uma que o post foi excluido com sucesso
