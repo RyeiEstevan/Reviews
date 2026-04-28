@@ -12,7 +12,7 @@ Scenario: Falha ao comentar sem conteúdo
 Given estou logado como o usuário "Maria321"
 And existe o post "Review Ratatouille" postado por "Pedro123"
 When eu seleciono para comentar no post "Review Ratatouille"        
-And eu deixo o campo de comentário em branco
+And eu deixo o campo de comentário vazio
 And eu seleciono para publicar o comentário
 Then eu vejo uma mensagem de erro indicando que o comentário não pode estar vazio
 And eu vejo que o comentário não foi publicado
