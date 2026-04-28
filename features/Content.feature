@@ -20,7 +20,7 @@ When eu tento cadastrar o conteúdo "Avatar" com a duração "-120 min"
 Then o sistema retorna uma mensagem de erro sobre formato de dados inválido
 And o sistema não realiza o cadastro do conteúdo "Avatar"
 
-Scenario: cadastrar novo item de entretenimento com sucesso
+Scenario: cadastrar novo conteúdo com sucesso
 Given eu acesso o sistema com um usuário que possui permissão de moderador 
 And eu visualizo o formulário de cadastro de novo item 
 When eu preencho os campos de título, gênero, ano de lançamento e duração 
