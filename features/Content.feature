@@ -21,7 +21,7 @@ Then o sistema retorna uma mensagem de erro sobre formato de dados inválido
 And o sistema não realiza o cadastro do conteúdo "Avatar"
 
 Scenario: cadastrar novo conteúdo com sucesso
-Given eu acesso o sistema com um usuário que possui permissão de moderador 
+Given eu acesso o sistema como "moderador" 
 And eu visualizo o formulário de cadastro de novo item 
 When eu preencho o campos de título com o nome "Matrix"
 And gênero com o nome "ficção científica" 
