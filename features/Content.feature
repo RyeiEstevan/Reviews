@@ -23,7 +23,10 @@ And o sistema não realiza o cadastro do conteúdo "Avatar"
 Scenario: cadastrar novo conteúdo com sucesso
 Given eu acesso o sistema com um usuário que possui permissão de moderador 
 And eu visualizo o formulário de cadastro de novo item 
-When eu preencho os campos de título, gênero, ano de lançamento e duração 
+When eu preencho o campos de título com o nome "Matrix"
+And gênero com o nome "ficção científica" 
+And ano de lançamento com o ano "1999"
+And duração como "120 min" 
 And eu clico no botão "Salvar"
 Then o sistema deve confirmar o salvamento dos dados com sucesso
 And o novo conteúdo deve passar a ser listado no catálogo geral do sistema
