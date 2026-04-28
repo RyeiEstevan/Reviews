@@ -30,10 +30,10 @@ And o novo conteúdo deve passar a ser listado no catálogo geral do sistema
 
 Scenario: publicação de review com sucesso
 Given eu acesso o sistema como "usuário comum" e estou na página de detalhes do filme "Matrix".
-When eu seleciono a nota "5" na escala de estrelas e escrevo "Um clássico absoluto!" no campo de comentário para o filme "Avatar"
+When eu seleciono a nota "5" na escala de estrelas e escrevo "Um clássico absoluto!" no campo de comentário
 And eu clico no botão "Enviar".
 Then o sistema deve exibir uma mensagem de confirmação: "Sua review foi publicada com sucesso!"
-And o meu comentário deve aparecer instantaneamente no topo da lista de comentários do filme "Avatar".
+And o meu comentário deve aparecer instantaneamente no topo da lista de comentários do filme.
 
 Scenario: tentativa de envio de review vazia
 Given que eu estou na seção de reviews do livro "O Caminho dos Reis"
