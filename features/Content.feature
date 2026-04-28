@@ -28,7 +28,7 @@ And eu clico no botão "Salvar"
 Then o sistema deve confirmar o salvamento dos dados com sucesso
 And o novo conteúdo deve passar a ser listado no catálogo geral do sistema
 
-Scenario : publicação de review com sucesso
+Scenario: publicação de review com sucesso
 Given eu acesso o sistema como "usuário comum" e estou na página de detalhes do filme "Matrix".
 When eu seleciono a nota "5" na escala de estrelas e escrevo "Um clássico absoluto!" no campo de comentário para o filme "Avatar"
 And eu clico no botão "Enviar".
