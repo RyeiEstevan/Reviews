@@ -186,31 +186,40 @@ Feature: Recuperação de conta via e-mail
   So that eu possa redefinir minha senha quando esquecer o acesso
 
   Scenario: Solicitar recuperação de senha com sucesso
-    Given que o usuário está na tela de login
-    And existe uma conta cadastrada com nome "Mário Borba", username "marioborba", e-mail "mario@email.com" e senha "123456"
-    When clica em "Esqueci minha senha"
-    And informa o e-mail "mario@email.com"
-    Then o sistema envia um link de recuperação para o e-mail informado
+    Given que o usuário está na tela de "Esqueci minha senha"
+    And existe uma conta cadastrada com e-mail "mario@email.com" e senha ativa
+    When informa o e-mail "mario@email.com" no campo de recuperação
+    And clica no botão "Enviar link de recuperação"
+    Then o sistema exibe a mensagem de sucesso "Se o e-mail estiver cadastrado, você receberá um link em instantes"
+    And o usuário é redirecionado para a tela de confirmação de envio
+    And um e-mail contendo um link de recuperação com um token único e validade de 2 horas é enviado para "mario@email.com"
 
-  Scenario: Falha ao solicitar recuperação com e-mail inexistente
-    Given que o usuário está na tela de login
-    When clica em "Esqueci minha senha"
-    And informa o e-mail "naoexiste@email.com"
-    Then o sistema exibe uma mensagem de erro informando que a conta não foi encontrada
+  Scenario: Falha ao solicitar recuperação com e-mail inexistente (Prática de Segurança)
+    Given que o usuário está na tela de "Esqueci minha senha"
+    And não existe nenhuma conta cadastrada com o e-mail "naoexiste@email.com"
+    When informa o e-mail "naoexiste@email.com" no campo de recuperação
+    And clica no botão "Enviar link de recuperação"
+    Then o sistema exibe a mensagem genérica "Se o e-mail estiver cadastrado, você receberá um link em instantes"
+    And o usuário é redirecionado para a tela de confirmação de envio
+    And nenhum e-mail de recuperação é disparado pelo sistema
 
-  Scenario: Redefinir senha com link válido
+  Scenario: Redefinir senha com link válido e dentro do prazo
     Given que existe uma conta cadastrada com e-mail "mario@email.com" e senha "123456"
-    And que o usuário recebeu um link de recuperação válido para o e-mail "mario@email.com"
-    And acessa a página de redefinição de senha
+    And que o usuário acessou um link de recuperação válido e não expirado gerado para "mario@email.com"
+    And está na página de "Redefinição de Senha"
     When informa a nova senha "NovaSenha123"
-    And confirma a alteração
-    Then o sistema atualiza a senha com sucesso
-    And o usuário pode fazer login com e-mail "mario@email.com" e senha "NovaSenha123"
+    And confirma a nova senha "NovaSenha123" no campo de confirmação
+    And clica no botão "Salvar nova senha"
+    Then o sistema exibe a mensagem de sucesso "Sua senha foi redefinida com sucesso!"
+    And o sistema redireciona o usuário para a tela de login
+    And o token de recuperação utilizado é invalidado permanentemente
+    And o usuário não consegue mais realizar login com a senha antiga "123456"
+    And o usuário consegue realizar login com e-mail "mario@email.com" e senha "NovaSenha123"
 
-  Scenario: Falha ao redefinir senha com link expirado
-    Given que existe uma conta cadastrada com e-mail "mario@email.com" e senha "123456"
-    And que o usuário recebeu um link de recuperação para o e-mail "mario@email.com"
-    And o prazo de expiração do link foi ultrapassado
-    When acessa o link de redefinição
-    Then o sistema informa que o link expirou
-    And solicita uma nova recuperação de senha
+  Scenario: Falha ao tentar redefinir senha com link expirado ou já utilizado
+    Given que existe uma conta cadastrada com e-mail "mario@email.com"
+    And que o usuário possui um link de recuperação cujo prazo de 2 horas foi ultrapassado
+    When o usuário acessa a URL do link de redefinição
+    Then o sistema não exibe os campos de nova senha
+    And o sistema exibe a mensagem de erro "O link de recuperação expirou ou já foi utilizado."
+    And exibe um botão "Solicitar novo link" que redireciona para a tela de "Esqueci minha senha"
