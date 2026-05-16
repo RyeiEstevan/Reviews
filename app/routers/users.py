@@ -62,4 +62,4 @@ async def update_me(data: UserUpdate, current_user=Depends(get_current_user)):
 @router.delete("/me", response_model=MessageResponse)
 async def delete_me(current_user=Depends(get_current_user)):
     await AuthService.deactivate_user(current_user)
-    return {"message": "Conta desativada logicamente com sucesso"}
+    return {"message": "Conta desativada com sucesso"}

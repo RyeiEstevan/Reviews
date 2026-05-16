@@ -39,6 +39,11 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
 
-
 class MessageResponse(BaseModel):
     message: str
+
+class EmailTokenRequest(BaseModel):
+    token: str
+
+class ResendVerificationRequest(BaseModel):
+    email: EmailStr
