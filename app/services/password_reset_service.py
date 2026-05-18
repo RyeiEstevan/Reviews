@@ -1,5 +1,5 @@
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, UTC, timedelta
 
 from fastapi import HTTPException, status
 
@@ -24,7 +24,7 @@ class PasswordResetService:
         ).delete()
 
         token = secrets.token_urlsafe(32)
-        expires_at = datetime.utcnow() + timedelta(
+        expires_at = datetime.now(UTC) + timedelta(
             hours=settings.password_reset_expire_hours
         )
 
@@ -61,11 +61,17 @@ class PasswordResetService:
             PasswordResetToken.token == token
         )
 
-        if (
-            not token_data
-            or token_data.used
-            or datetime.utcnow() > token_data.expires_at
-        ):
+        if not token_data:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="O link de recuperação expirou ou já foi utilizado.",
+            )
+
+        expires_at = token_data.expires_at
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=UTC)
+
+        if token_data.used or datetime.now(UTC) > expires_at:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="O link de recuperação expirou ou já foi utilizado.",
@@ -96,11 +102,17 @@ class PasswordResetService:
             PasswordResetToken.token == token
         )
 
-        if (
-            not token_data
-            or token_data.used
-            or datetime.utcnow() > token_data.expires_at
-        ):
+        if not token_data:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="O link de recuperação expirou ou já foi utilizado.",
+            )
+
+        expires_at = token_data.expires_at
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=UTC)
+
+        if token_data.used or datetime.now(UTC) > expires_at:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="O link de recuperação expirou ou já foi utilizado.",

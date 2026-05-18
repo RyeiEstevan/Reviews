@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 
 from beanie import Document
 from pydantic import Field
@@ -8,7 +8,7 @@ from pymongo import ASCENDING, IndexModel
 class FriendRequest(Document):
     sender_id: str
     receiver_id: str
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     class Settings:
         name = "friend_requests"

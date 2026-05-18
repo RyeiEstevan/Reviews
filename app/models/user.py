@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Optional
 
@@ -17,7 +17,7 @@ class UserListItem(BaseModel):
     title: str = Field(min_length=1, max_length=255)
     media_type: str = Field(min_length=1, max_length=50)
     status: ListStatus
-    added_at: datetime = Field(default_factory=datetime.utcnow)
+    added_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class User(Document):
@@ -31,7 +31,7 @@ class User(Document):
     is_verified: bool = False
     is_private: bool = False
     list_items: list[UserListItem] = Field(default_factory=list)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     class Settings:
         name = "users"

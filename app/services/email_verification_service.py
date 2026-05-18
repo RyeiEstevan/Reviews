@@ -1,5 +1,5 @@
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, UTC, timedelta
 
 from fastapi import HTTPException, status
 
@@ -18,7 +18,7 @@ class EmailVerificationService:
         ).delete()
 
         token = secrets.token_urlsafe(32)
-        expires_at = datetime.utcnow() + timedelta(
+        expires_at = datetime.now(UTC) + timedelta(
             hours=settings.email_verification_expire_hours
         )
 
@@ -56,7 +56,7 @@ class EmailVerificationService:
         if (
             not token_data
             or token_data.used
-            or datetime.utcnow() > token_data.expires_at
+            or datetime.now(UTC) > token_data.expires_at
         ):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
