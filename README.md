@@ -1,3 +1,5 @@
+# Reviews Platform
+
 # Compartilhamento de reviews
 
 Exemplos: Skoob, Filmow, Letterboxd, My Anime List, Banco de Séries, Goodreads.
@@ -17,3 +19,22 @@ Criar uma aplicação que permita o compartilhamento de opiniões sobre diferent
 ## Equipe
 
 Feature Usuário Administrador: Gabriel Nogueira de Moura Pereira.
+
+# Ferramentas
+
+Back-end
+
+* **Framework:** FastAPI (Python 3.12)
+* **Banco de Dados:** MongoDB Atlas 
+* **Infraestrutura:** Docker e Docker Compose
+
+## Como iniciar o ambiente de desenvolvimento
+
+A aplicação está totalmente containerizada. Utilize o Docker.
+
+### Pré-requisitos
+* Docker e Docker Compose instalados.
+
+### Subir o contêiner
+
+    docker compose up --build
