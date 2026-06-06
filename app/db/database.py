@@ -3,6 +3,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import init_beanie
 
 from app.core.config import settings
+from app.db.models import DOCUMENT_MODELS
 
 client = None
 database = None
@@ -25,6 +26,5 @@ async def init_db(db=None):
 
     await init_beanie(
         database=database,
-        document_models=[
-        ],
+        document_models=DOCUMENT_MODELS,
     )
