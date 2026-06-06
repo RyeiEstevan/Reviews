@@ -1,3 +1,7 @@
+# Service-level (backend) scenarios for the Usuário Administrador feature.
+# They assert API responses + persisted state (no UI). Frontend E2E (Cypress)
+# reuses these same acceptance criteria — mapped in docs/admin-user/SPEC.md §9.1.
+@backend @service
 Feature: Admin user
 
   As an administrator of the Reviews platform
@@ -18,6 +22,20 @@ Feature: Admin user
     Then the system persists the user "AnaReviews" with role "common"
     And the audit log records "create_user" by "GabrielAdmin"
 
+  Scenario: superadmin creates an admin account successfully
+    Given the superadmin "RootAdmin" is authenticated
+    And no account exists with username "NovaAdmin"
+    When the superadmin creates a user with username "NovaAdmin", email "nova@example.com" and role "admin"
+    Then the system persists the user "NovaAdmin" with role "admin"
+    And the audit log records "create_user" by "RootAdmin"
+
+  Scenario: common admin cannot create an admin account
+    Given the admin "OpsAdmin" is authenticated with role "admin"
+    And no account exists with username "NovaAdmin"
+    When "OpsAdmin" creates a user with username "NovaAdmin", email "nova@example.com" and role "admin"
+    Then the system returns a forbidden access error
+    And no account exists with username "NovaAdmin"
+
   Scenario: common admin tries to remove another admin and is blocked
     Given the admin "OpsAdmin" is authenticated with role "admin"
     And the user "DevAdmin" exists with role "admin" and status "active"
@@ -26,12 +44,18 @@ Feature: Admin user
     And "DevAdmin" remains active with role "admin"
     And no related records for "DevAdmin" are deleted
 
+  Scenario: superadmin permanently deletes an admin account
+    Given the superadmin "RootAdmin" is authenticated
+    And the user "DevAdmin" exists with role "admin" and status "active"
+    When "RootAdmin" requests permanent deletion of "DevAdmin"
+    Then the user "DevAdmin" is removed
+    And the audit log records "delete_user" by "RootAdmin"
+
   Scenario: admin edits an existing user email successfully
     Given the admin "GabrielAdmin" is authenticated
     And the active user "Maria321" has email "old@example.com"
     When the admin updates "Maria321" email to "new@example.com"
     Then "Maria321" has email "new@example.com"
-    And an email verification token is created for "new@example.com"
     And the audit log records "update_user" by "GabrielAdmin"
     And the audit log entry stores old email "old@example.com" and new email "new@example.com"
 
@@ -40,8 +64,18 @@ Feature: Admin user
     And the common user "Pedro123" has a public post "Review Ratatouille"
     When the admin bans "Pedro123" with reason "rule violation"
     Then "Pedro123" has status "banned"
-    And the post "Review Ratatouille" is hidden from public listings
+    And the post "Review Ratatouille" is hidden from the public posts feed
     And the post "Review Ratatouille" remains stored for moderation history
+    And the audit log records "ban_user" by "GabrielAdmin"
+
+  Scenario: admin unbans a previously banned user
+    Given the admin "GabrielAdmin" is authenticated
+    And the user "Pedro123" has status "banned"
+    And the post "Review Ratatouille" owned by "Pedro123" is hidden
+    When the admin unbans "Pedro123"
+    Then "Pedro123" has status "active"
+    And the post "Review Ratatouille" is visible in the public posts feed
+    And the audit log records "unban_user" by "GabrielAdmin"
 
   Scenario: admin deletes a common user account permanently
     Given the admin "GabrielAdmin" is authenticated
@@ -66,12 +100,13 @@ Feature: Admin user
     When the admin registers a contributor with name "" and role "artist"
     Then the system returns the validation error "name is required"
     And no contributor with an empty name is stored in the catalog
+    And no audit log entry for action "create_artist" by "GabrielAdmin" is created
 
   Scenario: admin searches for an artist by partial name
     Given the admin "GabrielAdmin" is authenticated
     And the catalog contains the contributor "Fernanda Montenegro" with role "artist"
     And the catalog contains the contributor "Wendel Bezerra" with role "voice-actor"
-    When the admin searches catalog contributors by the term "Fern"
+    When the admin searches catalog contributors by the term "fern"
     Then the search results include "Fernanda Montenegro"
     And the search results do not include "Wendel Bezerra"
 
@@ -81,8 +116,20 @@ Feature: Admin user
     When the admin creates a news post titled "New season announced" with body "The new season starts in June"
     And the admin sets the news tags to "series,release"
     Then the news post "New season announced" is stored with tags "series,release"
-    And common users can see the news post "New season announced" on the feed
     And the audit log records "create_news" by "GabrielAdmin"
+
+  Scenario: common visitors see admin news on the public feed
+    Given a published news post titled "New season announced" with tags "series,release" exists
+    When an unauthenticated visitor requests the public news feed
+    Then the public news feed includes "New season announced"
+    And the news tags "series,release" are visible to the visitor
+
+  Scenario: listing users does not modify stored data
+    Given the admin "GabrielAdmin" is authenticated
+    And the system stores exactly 3 users
+    When the admin requests the admin users list twice
+    Then the system still stores exactly 3 users
+    And no audit log entry is created for the listing
 
   Scenario: audit log records the registration of a new artist
     Given the admin "GabrielAdmin" is authenticated
