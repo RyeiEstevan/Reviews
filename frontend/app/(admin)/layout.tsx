@@ -3,14 +3,27 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
+import {
+  Clapperboard,
+  LayoutDashboard,
+  Users,
+  Library,
+  Newspaper,
+  ScrollText,
+  LogOut,
+} from "lucide-react";
 import { clearSession, getRole, getUsername, isLoggedIn } from "@/lib/auth";
+import { formatRole } from "@/lib/copy";
 
+// `cy` is the stable English slug for the data-cy selector; `label` is the
+// translated text shown to the user. They are kept separate on purpose so
+// translating a label never changes a test selector.
 const NAV = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/users", label: "Users" },
-  { href: "/artists", label: "Catalog" },
-  { href: "/news", label: "News" },
-  { href: "/audit", label: "Audit log" },
+  { href: "/dashboard", cy: "dashboard", label: "Visão geral", Icon: LayoutDashboard },
+  { href: "/users", cy: "users", label: "Usuários", Icon: Users },
+  { href: "/artists", cy: "catalog", label: "Catálogo", Icon: Library },
+  { href: "/news", cy: "news", label: "Notícias", Icon: Newspaper },
+  { href: "/audit", cy: "audit", label: "Auditoria", Icon: ScrollText },
 ];
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
@@ -41,28 +54,45 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
     <div className="shell">
       <aside className="sidebar">
-        <div className="brand">Reviews Admin</div>
+        <div className="brand">
+          <span className="brand-mark">
+            <Clapperboard size={19} />
+          </span>
+          <span className="brand-text">
+            <b>Reviews</b>
+            <span>Painel Administrativo</span>
+          </span>
+        </div>
+
+        <div className="nav-label">Administração</div>
         <nav data-cy="sidebar">
-          {NAV.map((item) => (
+          {NAV.map(({ href, cy, label, Icon }) => (
             <Link
-              key={item.href}
-              href={item.href}
-              data-cy={`nav-${item.label.toLowerCase().split(" ")[0]}`}
-              className={pathname === item.href ? "active" : ""}
+              key={href}
+              href={href}
+              data-cy={`nav-${cy}`}
+              className={pathname === href ? "active" : ""}
             >
-              {item.label}
+              <Icon strokeWidth={1.9} />
+              {label}
             </Link>
           ))}
         </nav>
+
         <div className="spacer" />
-        <div className="muted" style={{ fontSize: "0.8rem", marginBottom: "0.5rem" }}>
-          <div data-cy="session-username">{username}</div>
-          <span className="badge role" data-cy="session-role">
-            {role}
-          </span>
+
+        <div className="session-card">
+          <span className="session-avatar">{(username ?? "?").charAt(0)}</span>
+          <div className="session-meta">
+            <div data-cy="session-username">{username}</div>
+            <span className="badge role" data-cy="session-role">
+              {role ? formatRole(role) : ""}
+            </span>
+          </div>
         </div>
         <button className="secondary" data-cy="logout" onClick={logout}>
-          Log out
+          <LogOut size={16} />
+          Sair
         </button>
       </aside>
       <main className="content">{children}</main>

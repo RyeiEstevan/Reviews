@@ -49,6 +49,7 @@ export type AuditEntry = {
   target_type: string;
   target: string | null;
   metadata: Record<string, unknown>;
+  created_at: string;
 };
 export type LoginResponse = {
   access_token: string;
