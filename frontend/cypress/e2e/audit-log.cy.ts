@@ -18,7 +18,7 @@ describe("audit log", () => {
     cy.get("[data-cy=audit-action]").select("create_artist");
     cy.get("[data-cy=audit-apply]").click();
 
-    cy.get("[data-cy=audit-table]").should("contain", "create_artist");
+    cy.get("[data-cy=audit-table]").should("contain", "Contribuidor cadastrado");
     cy.get("[data-cy=audit-row-create_artist]").should("exist");
   });
 

@@ -18,14 +18,14 @@ describe("catalog / artists", () => {
     cy.get("[data-cy=artist-create]").click();
 
     cy.get("[data-cy=artists-success]").should("be.visible");
-    cy.get(`[data-cy=artist-row-${name}]`).should("contain", name).and("contain", "voice-actor");
+    cy.get(`[data-cy=artist-row-${name}]`).should("contain", name).and("contain", "dublador");
   });
 
   it("rejects an empty name (#12)", () => {
     cy.visit("/artists");
     cy.get("[data-cy=artist-name]").clear();
     cy.get("[data-cy=artist-create]").click();
-    cy.get("[data-cy=artists-error]").should("be.visible").and("contain", "name is required");
+    cy.get("[data-cy=artists-error]").should("be.visible").and("contain", "obrigatório");
   });
 
   it("finds a contributor by case-insensitive partial name (#13)", () => {

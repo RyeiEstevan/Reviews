@@ -13,7 +13,7 @@ describe("users hierarchy (R1)", () => {
     cy.get("[data-cy=user-password]").type("adminpass");
     cy.get("[data-cy=user-role]").select("admin");
     cy.get("[data-cy=user-create]").click();
-    cy.get(`[data-cy=user-row-${adminName}]`).should("contain", "admin"); // #3
+    cy.get(`[data-cy=user-row-${adminName}]`).should("contain", "administrador"); // #3
 
     cy.get(`[data-cy=delete-${adminName}]`).click();
     cy.get("[data-cy=cascade-confirm]").click();

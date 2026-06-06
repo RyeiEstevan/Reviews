@@ -12,7 +12,7 @@ describe("auth / login", () => {
 
     cy.location("pathname").should("eq", "/dashboard");
     cy.get("[data-cy=dashboard]").should("be.visible");
-    cy.get("[data-cy=session-role]").should("contain", "superadmin");
+    cy.get("[data-cy=session-role]").should("contain", "superadministrador");
   });
 
   it("rejects wrong credentials with a visible error", () => {
@@ -21,7 +21,7 @@ describe("auth / login", () => {
     cy.get("[data-cy=login-password]").type("wrong-password");
     cy.get("[data-cy=login-submit]").click();
 
-    cy.get("[data-cy=login-error]").should("be.visible").and("contain", "invalid credentials");
+    cy.get("[data-cy=login-error]").should("be.visible").and("contain", "Credenciais inválidas");
     cy.location("pathname").should("eq", "/login");
   });
 
@@ -44,6 +44,6 @@ describe("auth / login", () => {
     // And through the UI: a common session sees the admin error, not the data.
     cy.loginAs(common.username, common.password);
     cy.visit("/users");
-    cy.get("[data-cy=users-error]").should("be.visible").and("contain", "admin access required");
+    cy.get("[data-cy=users-error]").should("be.visible").and("contain", "Acesso de administrador necessário");
   });
 });

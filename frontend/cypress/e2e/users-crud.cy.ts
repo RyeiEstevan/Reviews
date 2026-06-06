@@ -18,7 +18,7 @@ describe("users CRUD", () => {
     cy.get("[data-cy=user-create]").click();
 
     cy.get("[data-cy=users-success]").should("be.visible");
-    cy.get(`[data-cy=user-row-${name}]`).should("contain", name).and("contain", "common");
+    cy.get(`[data-cy=user-row-${name}]`).should("contain", name).and("contain", "comum");
   });
 
   it("edits a user's email (#7)", () => {
@@ -50,7 +50,7 @@ describe("users CRUD", () => {
     cy.get(`[data-cy=user-row-${name}]`).should("exist");
 
     cy.get(`[data-cy=delete-${name}]`).click();
-    cy.get("[data-cy=cascade-modal]").should("be.visible").and("contain", "cascades");
+    cy.get("[data-cy=cascade-modal]").should("be.visible").and("contain", "auditoria");
     cy.get("[data-cy=cascade-confirm]").click();
 
     cy.get("[data-cy=users-success]").should("be.visible");

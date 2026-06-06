@@ -16,13 +16,13 @@ describe("ban / unban", () => {
     cy.loginAs(ROOT.username, ROOT.password);
     cy.visit("/users");
 
-    cy.get(`[data-cy=user-row-${name}] [data-cy=user-status]`).should("contain", "active");
+    cy.get(`[data-cy=user-row-${name}] [data-cy=user-status]`).should("contain", "ativo");
 
     cy.get(`[data-cy=ban-${name}]`).click();
     cy.get("[data-cy=users-success]").should("be.visible");
-    cy.get(`[data-cy=user-row-${name}] [data-cy=user-status]`).should("contain", "banned"); // #8
+    cy.get(`[data-cy=user-row-${name}] [data-cy=user-status]`).should("contain", "banido"); // #8
 
     cy.get(`[data-cy=unban-${name}]`).click();
-    cy.get(`[data-cy=user-row-${name}] [data-cy=user-status]`).should("contain", "active"); // #9
+    cy.get(`[data-cy=user-row-${name}] [data-cy=user-status]`).should("contain", "ativo"); // #9
   });
 });
