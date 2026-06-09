@@ -1,0 +1,486 @@
+/**
+ * frontend/app/content/content.css
+ *
+ * Styles for the Content feature:
+ * - ContentCard
+ * - ContentForm
+ * - ReviewForm
+ * - Catalog page grid
+ *
+ * Add @import './content.css' to your global CSS or layout.
+ * Color tokens: uses --color-* CSS vars from your design system.
+ * Falls back to sensible defaults if the vars aren't defined.
+ */
+
+/* ── Card ──────────────────────────────────────────────────────────────────── */
+
+.content-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: var(--color-surface, #1a1a2e);
+    border: 1px solid var(--color-border, #2e2e50);
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: box-shadow 0.2s, transform 0.15s;
+  }
+  
+  .content-card:hover {
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+    transform: translateY(-2px);
+  }
+  
+  .content-card__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .content-card__title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--color-text-primary, #e2e2f5);
+    margin: 0;
+    line-height: 1.3;
+  }
+  
+  .content-card__meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.35rem 0.75rem;
+    font-size: 0.82rem;
+    color: var(--color-text-muted, #8888aa);
+    margin: 0 0 1rem;
+  }
+  
+  .content-card__meta dt {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 0.7rem;
+  }
+  
+  .content-card__meta dd {
+    margin: 0;
+    color: var(--color-text-secondary, #c0c0e0);
+  }
+  
+  .content-card__footer {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--color-border, #2e2e50);
+  }
+  
+  .content-card__error {
+    width: 100%;
+    font-size: 0.78rem;
+    color: var(--color-error, #f87171);
+    margin: 0;
+  }
+  
+  /* ── View button ────────────────────────────────────────────────────────────── */
+  
+  .btn--view {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.45rem 1rem;
+    border-radius: 8px;
+    border: 1.5px solid var(--color-accent, #7c3aed);
+    background: transparent;
+    color: var(--color-accent, #7c3aed);
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, opacity 0.15s;
+  }
+  
+  .btn--view:hover:not(:disabled) {
+    background: var(--color-accent, #7c3aed);
+    color: #fff;
+  }
+  
+  .btn--view.btn--viewed,
+  .btn--view:disabled {
+    background: var(--color-success-muted, #14532d22);
+    border-color: var(--color-success, #22c55e);
+    color: var(--color-success, #22c55e);
+    cursor: default;
+    opacity: 0.9;
+  }
+  
+  /* ── Primary / danger buttons ───────────────────────────────────────────────── */
+  
+  .btn--primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.55rem 1.4rem;
+    border-radius: 8px;
+    border: none;
+    background: var(--color-accent, #7c3aed);
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s, filter 0.15s;
+  }
+  
+  .btn--primary:hover:not(:disabled) {
+    filter: brightness(1.12);
+  }
+  
+  .btn--primary:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+  
+  .btn--danger {
+    background: transparent;
+    border: 1.5px solid var(--color-error, #ef4444);
+    color: var(--color-error, #ef4444);
+    border-radius: 6px;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  
+  .btn--danger:hover {
+    background: var(--color-error, #ef4444);
+    color: #fff;
+  }
+  
+  .btn--sm {
+    padding: 0.28rem 0.6rem;
+    font-size: 0.75rem;
+  }
+  
+  /* ── Catalog grid ───────────────────────────────────────────────────────────── */
+  
+  .catalog-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+  }
+  
+  .catalog-page__header {
+    margin-bottom: 2rem;
+  }
+  
+  .catalog-page__header h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--color-text-primary, #e2e2f5);
+    margin-bottom: 0.35rem;
+  }
+  
+  .catalog-page__subtitle {
+    color: var(--color-text-muted, #8888aa);
+    font-size: 0.95rem;
+  }
+  
+  .catalog-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.25rem;
+  }
+  
+  .catalog-page__loading,
+  .catalog-page__empty {
+    color: var(--color-text-muted, #8888aa);
+    padding: 2rem 0;
+    text-align: center;
+  }
+  
+  .catalog-page__error,
+  .page-error {
+    background: var(--color-error-bg, #450a0a);
+    border: 1px solid var(--color-error, #ef4444);
+    color: var(--color-error, #ef4444);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.88rem;
+  }
+  
+  /* ── Form shared ────────────────────────────────────────────────────────────── */
+  
+  .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    margin-bottom: 1rem;
+  }
+  
+  .form-field label {
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: var(--color-text-secondary, #c0c0e0);
+  }
+  
+  .form-field input,
+  .form-field textarea {
+    background: var(--color-input-bg, #12122a);
+    border: 1.5px solid var(--color-border, #2e2e50);
+    border-radius: 8px;
+    color: var(--color-text-primary, #e2e2f5);
+    padding: 0.55rem 0.8rem;
+    font-size: 0.9rem;
+    transition: border-color 0.15s;
+  }
+  
+  .form-field input:focus,
+  .form-field textarea:focus {
+    outline: none;
+    border-color: var(--color-accent, #7c3aed);
+  }
+  
+  .form-field input[aria-invalid="true"],
+  .form-field textarea[aria-invalid="true"],
+  .form-field--error input,
+  .form-field--error textarea {
+    border-color: var(--color-error, #ef4444) !important;
+  }
+  
+  .form-field--error .star-rating svg polygon {
+    stroke: var(--color-error, #ef4444) !important;
+  }
+  
+  .form-field__error {
+    font-size: 0.78rem;
+    color: var(--color-error, #ef4444);
+  }
+  
+  /* ── ContentForm ────────────────────────────────────────────────────────────── */
+  
+  .content-form {
+    background: var(--color-surface, #1a1a2e);
+    border: 1px solid var(--color-border, #2e2e50);
+    border-radius: 12px;
+    padding: 1.5rem;
+    max-width: 480px;
+  }
+  
+  .content-form__title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--color-text-primary, #e2e2f5);
+    margin: 0 0 1.25rem;
+  }
+  
+  .content-form__success {
+    background: var(--color-success-bg, #052e16);
+    border: 1px solid var(--color-success, #22c55e);
+    color: var(--color-success, #22c55e);
+    border-radius: 8px;
+    padding: 0.65rem 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.88rem;
+  }
+  
+  .content-form__error,
+  .content-form__error--global {
+    background: var(--color-error-bg, #450a0a);
+    border: 1px solid var(--color-error, #ef4444);
+    color: var(--color-error, #ef4444);
+    border-radius: 8px;
+    padding: 0.65rem 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.88rem;
+  }
+  
+  /* ── ReviewForm ─────────────────────────────────────────────────────────────── */
+  
+  .review-form {
+    background: var(--color-surface, #1a1a2e);
+    border: 1px solid var(--color-border, #2e2e50);
+    border-radius: 12px;
+    padding: 1.25rem;
+  }
+  
+  .review-form__heading {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-text-primary, #e2e2f5);
+    margin: 0 0 1rem;
+  }
+  
+  .review-form__success {
+    background: var(--color-success-bg, #052e16);
+    border: 1px solid var(--color-success, #22c55e);
+    color: var(--color-success, #22c55e);
+    border-radius: 8px;
+    padding: 0.6rem 0.9rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.87rem;
+  }
+  
+  .review-form__error {
+    background: var(--color-error-bg, #450a0a);
+    border: 1px solid var(--color-error, #ef4444);
+    color: var(--color-error, #ef4444);
+    border-radius: 8px;
+    padding: 0.6rem 0.9rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.87rem;
+  }
+  
+  /* ── Content Detail Page ────────────────────────────────────────────────────── */
+  
+  .content-detail-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+  
+  .content-detail__header {
+    margin-bottom: 1rem;
+  }
+  
+  .content-detail__title {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--color-text-primary, #e2e2f5);
+    margin: 0 0 0.5rem;
+  }
+  
+  .content-detail__rating {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .content-detail__score {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-text-primary, #e2e2f5);
+  }
+  
+  .content-detail__review-count {
+    font-size: 0.85rem;
+    color: var(--color-text-muted, #8888aa);
+  }
+  
+  .content-detail__meta {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    font-size: 0.88rem;
+  }
+  
+  .content-detail__meta dt {
+    font-weight: 600;
+    color: var(--color-text-muted, #8888aa);
+    text-transform: uppercase;
+    font-size: 0.72rem;
+    letter-spacing: 0.05em;
+  }
+  
+  .content-detail__meta dd {
+    margin: 0.1rem 0 0;
+    color: var(--color-text-secondary, #c0c0e0);
+  }
+  
+  /* ── Review list ────────────────────────────────────────────────────────────── */
+  
+  .content-detail__review-list h2 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-text-primary, #e2e2f5);
+    margin-bottom: 1rem;
+  }
+  
+  .review-item {
+    background: var(--color-surface, #1a1a2e);
+    border: 1px solid var(--color-border, #2e2e50);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .review-item__header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    flex-wrap: wrap;
+  }
+  
+  .review-item__header strong {
+    color: var(--color-text-primary, #e2e2f5);
+    font-size: 0.9rem;
+  }
+  
+  .review-item__date {
+    font-size: 0.75rem;
+    color: var(--color-text-muted, #8888aa);
+    margin-left: auto;
+  }
+  
+  .review-item__comment {
+    margin: 0;
+    font-size: 0.88rem;
+    color: var(--color-text-secondary, #c0c0e0);
+    line-height: 1.55;
+  }
+  
+  .review-list__empty {
+    color: var(--color-text-muted, #8888aa);
+    text-align: center;
+    padding: 1.5rem 0;
+  }
+  
+  /* ── Admin page ─────────────────────────────────────────────────────────────── */
+  
+  .admin-content-page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+  }
+  
+  .admin-content-page h1 {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--color-text-primary, #e2e2f5);
+    margin-bottom: 2rem;
+  }
+  
+  .admin-content-page__form-section {
+    margin-bottom: 2.5rem;
+  }
+  
+  .admin-content-page__list-section h2 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-text-primary, #e2e2f5);
+    margin-bottom: 1rem;
+  }
+  
+  /* ── Responsive ─────────────────────────────────────────────────────────────── */
+  
+  @media (max-width: 640px) {
+    .catalog-grid {
+      grid-template-columns: 1fr;
+    }
+  
+    .content-detail__meta {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+  
+    .content-form {
+      max-width: 100%;
+    }
+  }
+  
