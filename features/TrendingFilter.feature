@@ -1,40 +1,41 @@
-Scenario: Filtragem de público na camada de serviço
-Given que no banco de dados a obra "Curta Metragem" possui média 5.0 baseada em 5 avaliações
-And a obra "O Poderoso Chefão" possui média 4.9 baseada em 1.200 avaliações
-And a regra do serviço exige um quórum mínimo de 50 avaliações para o ranking
-When o serviço recebe uma requisição para gerar a lista de "Mais Bem Avaliados"
-Than o serviço processa a agregação de notas validando o quórum
-And retorna um conjunto de dados que inclui a obra "O Poderoso Chefão"
-And omite completamente a obra "Curta Metragem" da resposta gerada.
+Feature: Trending Filter
 
-Scenario: Cálculo temporal para o ranking "Em Alta"
-Given que a obra "Clássico Antigo" possui 100.000 avaliações no total, sendo apenas 10 registradas nos últimos 7 dias
-And a obra "Lançamento Recente" possui 500 avaliações no total, sendo 450 registradas nos últimos 7 dias
-When o serviço recebe uma requisição para processar o ranking "Em Alta" considerando a janela temporal de 7 dias
-Than o serviço realiza a consulta filtrando as interações apenas pelo período recente
-And retorna a lista de resultados classificando a obra "Lançamento Recente" em uma posição superior à obra "Clássico Antigo".
+Scenario: Audience Filtering in the Service Layer
+  Given that in the database the work "Short Film" has average 5.0 based on 5 ratings
+  And the work "The Godfather" has average 4.9 based on 1,200 ratings
+  And the service rule requires a minimum quorum of 50 ratings for the ranking
+  When the service receives a request to generate the "Top Rated" list
+  Then the service processes the aggregation of ratings validating the quorum
+  And returns a dataset that includes the work "The Godfather"
+  And completely omits the work "Short Film" from the generated response.
 
-Scenario: Segmentação Regional no Ranking de Popularidade
-Given que a obra "Blockbuster Mundial" é a mais assistida globalmente, mas possui baixa tração no Brasil
-And a obra "Série Nacional" teve 50.000 visualizações concentradas apenas em território brasileiro nas últimas 48 horas
-When o serviço recebe uma requisição de ranking "Populares na Sua Região" com o header Accept-Language: pt-BR
-Than o serviço aplica o filtro geográfico cruzando os metadados de acesso
-And processa o cálculo de relevância local priorizando o volume regional
-And retorna o conjunto de dados com a obra "Série Nacional" na primeira posição
-And garante que o conteúdo entregue é culturalmente relevante para o usuário final.
+Scenario: Temporal calculation for the "Trending" ranking
+  Given the work "Old Classic" has 100,000 total views, with only 10 recorded in the last 30 days
+  And the work "Recent Release" has 500 total views, with 450 recorded in the last 30 days
+  When the service receives a request to process the "Trending" ranking with period set to "month"
+  Then the service performs the query filtering interactions only by the recent 30-day period
+  And returns the result list ranking "Recent Release" higher than "Old Classic".
 
-Scenario: Falha de Quórum por Volume Insuficiente
-Given que o banco de dados contém apenas obras com menos de 50 avaliações cada
-And a regra do serviço exige um quórum mínimo de 50 avaliações para o ranking
-When o serviço recebe uma requisição para gerar a lista de "Mais Bem Avaliados"
-Than o serviço processa a validação e identifica que nenhuma obra atingiu o threshold
-And retorna um conjunto de dados vazio (empty set) em vez de listar obras com quórum baixo
-And o sistema escreve um Registro de "Insufficient Data for Ranking" para monitoramento.
+Scenario: Category segmentation in the Popularity ranking
+  Given the work "Global Blockbuster" is a "movie" with high traction
+  And the work "National Series" is a "series" with high traction
+  When the service receives a ranking request with filter set to "series"
+  Then the service applies the category filter
+  And returns the dataset with the work "National Series"
+  And omits the work "Global Blockbuster" from the generated response.
 
-Scenario: Falha de Relevância por Janela Temporal Expirada
-Given que a obra "Sucesso de Bilheteria 1990" possui 1.000.000 de avaliações totais e 0 avaliações nos últimos 7 dias
-And a obra "Indie Viral" possui 1.000 avaliações, todas registradas nas últimas 24 horas
-When o serviço processa o ranking "Em Alta" ignorando incorretamente o filtro de data
-Than o sistema deve identificar a inconsistência entre o volume total e o volume temporal
-And a obra "Sucesso de Bilheteria 1990" não deve constar no topo do ranking "Em Alta"
-And um alerta de "Inconsistência de Regra de Negócio" deve ser registrado nos registros.
+Scenario: Quorum failure due to insufficient volume
+  Given the database only contains works with fewer than 50 ratings each
+  And the service rule requires a minimum quorum of 50 ratings for the ranking
+  When the service receives a request to generate the "Top Rated" list
+  Then the service processes the validation and identifies that no work reached the threshold
+  And returns an empty dataset instead of listing works with low quorum
+  And the system writes a "WARN: top_rated aggregation returned 0 items. Quorum threshold not met for current period." record for monitoring.
+
+Scenario: Relevance failure due to expired time window
+  Given the work "1990 Box Office Hit" has 1,000,000 total ratings and 0 ratings in the last 30 days
+  And the work "Viral Indie" has 1,000 ratings, all recorded in the last 24 hours
+  When the service processes the "Trending" ranking incorrectly ignoring the date filter
+  Then the system should identify the inconsistency between total volume and time-based volume
+  And the work "1990 Box Office Hit" should not appear at the top of the "Trending" ranking
+  And an "ERROR: trending aggregation bypassed temporal date_filter." alert should be recorded in the logs.

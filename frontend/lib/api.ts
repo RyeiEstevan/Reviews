@@ -113,4 +113,46 @@ export const api = {
   publicNews: () => request<{ data: News[] }>("/news").then((r) => r.data),
   publicPosts: () =>
     request<{ data: { id: string; owner: string; title: string }[] }>("/posts").then((r) => r.data),
+
+  // ─── Home / public feed ────────────────────────────────────────────────
+  home: (period: Period = "month", media_type: MediaFilter = "all") => {
+    const qs = new URLSearchParams({ period, media_type });
+    return request<HomeResponse>(`/home?${qs}`);
+  },
 };
+
+// ─── Home / Feed types ─────────────────────────────────────────────────────
+
+export type MediaType = "movie" | "series" | "book";
+
+export type MediaCard = {
+  id: string;
+  title: string;
+  type: MediaType;
+  year: number;
+  poster_url: string | null;
+  avg_score: number;
+  review_count: number;
+  platform: string | null;
+};
+
+export type RankingItem = {
+  position: number;
+  media: MediaCard;
+  value: string;
+};
+
+export type RankingBlock = {
+  title: string;
+  badge: string;
+  items: RankingItem[];
+};
+
+export type HomeResponse = {
+  trending: MediaCard[];
+  top_rated: MediaCard[];
+  rankings: RankingBlock[];
+};
+
+export type Period = "month" | "year" | "all";
+export type MediaFilter = "all" | "movie" | "series" | "book";

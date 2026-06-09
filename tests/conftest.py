@@ -73,6 +73,10 @@ def run(loop, db):
     """Run a coroutine on the shared loop (direct DB seeding from steps)."""
     return lambda coro: loop.run_until_complete(coro)
 
+@pytest.fixture(autouse=True)
+def patch_home_db(monkeypatch, db):
+    import app.routers.home as home_module
+    monkeypatch.setattr(home_module, "get_database", lambda: db)
 
 @pytest.fixture
 def context():

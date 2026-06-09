@@ -30,3 +30,9 @@ async def init_db(db=None):
         database=database,
         document_models=DOCUMENT_MODELS,
     )
+
+def get_database():
+    """Return the MongoDB database instance for direct collection access."""
+    if database is None:
+        raise RuntimeError("Database not initialized. Call init_db() first.")
+    return database
