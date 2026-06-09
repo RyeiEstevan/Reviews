@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Clapperboard, ShieldCheck, Users, ScrollText, AlertCircle } from "lucide-react";
+import Link from "next/link";
+import { Star, ShieldCheck, Users, ScrollText, AlertCircle } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { setSession } from "@/lib/auth";
 import { translateError } from "@/lib/copy";
@@ -21,7 +22,7 @@ export default function LoginPage() {
     try {
       const res = await api.login(username, password);
       setSession({ token: res.access_token, role: res.role, username: res.username });
-      router.replace("/home");
+      router.replace("/dashboard");
     } catch (err) {
       const msg = err instanceof ApiError ? translateError(err.message) : "Não foi possível conectar ao servidor";
       setError(msg);
@@ -33,15 +34,15 @@ export default function LoginPage() {
   return (
     <div className="auth-split">
       <aside className="auth-aside">
-        <div className="brand">
+        <Link href="/home" className="brand" style={{ textDecoration: "none" }}>
           <span className="brand-mark">
-            <Clapperboard size={19} />
+            <Star size={17} fill="#fff" stroke="none" />
           </span>
           <span className="brand-text">
             <b>Reviews</b>
             <span>Painel Administrativo</span>
           </span>
-        </div>
+        </Link>
 
         <div className="auth-hero">
           <h2>

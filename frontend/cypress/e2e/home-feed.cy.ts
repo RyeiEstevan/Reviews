@@ -43,7 +43,7 @@ const RANKINGS = [
     badge: "This Year",
     items: TRENDING_ITEMS.slice(0, 3).map((m, i) => ({
       position: i + 1,
-      media: m,
+      content: m,
       value: `${(15000 - i * 3000).toLocaleString()} views`,
     })),
   },
@@ -52,7 +52,7 @@ const RANKINGS = [
     badge: "This Year",
     items: TOP_RATED_ITEMS.map((m, i) => ({
       position: i + 1,
-      media: m,
+      content: m,
       value: m.avg_score.toFixed(1),
     })),
   },
@@ -61,7 +61,7 @@ const RANKINGS = [
     badge: "This Week",
     items: TRENDING_ITEMS.slice(0, 2).map((m, i) => ({
       position: i + 1,
-      media: m,
+      content: m,
       value: "New",
     })),
   },

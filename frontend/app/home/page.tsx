@@ -36,10 +36,10 @@ import {
   api,
   ApiError,
   type HomeResponse,
-  type MediaCard,
+  type ContentCard,
   type RankingBlock,
   type Period,
-  type MediaFilter,
+  type ContentFilter,
 } from "@/lib/api";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -68,14 +68,14 @@ function ScoreDot({ score }: { score: number }) {
   );
 }
 
-// ─── MediaCardTile — used in both carousels ───────────────────────────────────
+// ─── ContentCardTile — used in both carousels ──────────────────────────────────
 
-function MediaCardTile({
+function ContentCardTile({
   card,
   rank,
   "data-cy": dataCy,
 }: {
-  card: MediaCard;
+  card: ContentCard;
   rank?: number;
   "data-cy"?: string;
 }) {
@@ -199,7 +199,7 @@ function HorizontalCarousel({
   title: string;
   eyebrow?: string;
   icon: React.ReactNode;
-  items: MediaCard[];
+  items: ContentCard[];
   dataCy: string;
 }) {
   const maxIndex = Math.max(0, items.length - VISIBLE);
@@ -310,7 +310,7 @@ function HorizontalCarousel({
                 key={card.id || i}
                 style={{ flexShrink: 0, width: cardWidth }}
               >
-                <MediaCardTile
+                <ContentCardTile
                   card={card}
                   rank={i + 1}
                   data-cy={`${dataCy}-item-${card.title}`}
@@ -371,7 +371,7 @@ function RankingPanel({ block }: { block: RankingBlock }) {
         {block.items.map((item) => (
           <li
             key={item.position}
-            data-cy={`ranking-item-${item.media.title}`}
+            data-cy={`ranking-item-${item.content.title}`}
             style={{
               display: "flex",
               alignItems: "center",
@@ -401,10 +401,10 @@ function RankingPanel({ block }: { block: RankingBlock }) {
                   textOverflow: "ellipsis",
                 }}
               >
-                {item.media.title}
+                {item.content.title}
               </div>
               <div style={{ fontSize: "0.72rem", color: "var(--muted)" }}>
-                {typeLabel(item.media.type)} · {item.media.year || "—"}
+                {typeLabel(item.content.type)} · {item.content.year || "—"}
               </div>
             </div>
             <span
@@ -504,7 +504,7 @@ const PERIOD_OPTIONS: { value: Period; label: string }[] = [
   { value: "all",  label: "Todos"    },
 ];
 
-const TYPE_OPTIONS: { value: MediaFilter; label: string }[] = [
+const TYPE_OPTIONS: { value: ContentFilter; label: string }[] = [
   { value: "all",    label: "Todos"   },
   { value: "movie",  label: "Filmes"  },
   { value: "series", label: "Séries"  },
@@ -517,7 +517,7 @@ export default function HomePage() {
   const [data, setData] = useState<HomeResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [period, setPeriod] = useState<Period>("year");
-  const [mediaType, setMediaType] = useState<MediaFilter>("all");
+  const [contentType, setContentType] = useState<ContentFilter>("all");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -526,7 +526,7 @@ export default function HomePage() {
       setLoading(true);
       setError(null);
       try {
-        const res = await api.home(period, mediaType);
+        const res = await api.home(period, contentType);
         if (alive) setData(res);
       } catch (err) {
         if (alive)
@@ -540,7 +540,7 @@ export default function HomePage() {
       }
     })();
     return () => { alive = false; };
-  }, [period, mediaType]);
+  }, [period, contentType]);
 
   return (
     <div
@@ -578,9 +578,9 @@ export default function HomePage() {
           {TYPE_OPTIONS.map((opt) => (
             <button
               key={opt.value}
-              className={mediaType === opt.value ? "" : "secondary"}
+              className={contentType === opt.value ? "" : "secondary"}
               style={{ padding: "0.38rem 0.85rem", fontSize: "0.82rem" }}
-              onClick={() => setMediaType(opt.value)}
+              onClick={() => setContentType(opt.value)}
               data-cy={`filter-type-${opt.value}`}
             >
               {opt.label}

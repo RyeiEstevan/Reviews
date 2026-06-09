@@ -75,7 +75,7 @@ def test_top_rated_locked_to_recent_score_for_all_time_period():
 @given('that in the database the work "Short Film" has average 5.0 based on 5 ratings')
 def setup_short_film(run, db):
     run(
-        db.media.insert_one(
+        db.content.insert_one(
             {
                 "title": "Short Film",
                 "type": "movie",
@@ -95,7 +95,7 @@ def setup_short_film(run, db):
 @given('the work "The Godfather" has average 4.9 based on 1,200 ratings')
 def setup_godfather(run, db):
     run(
-        db.media.insert_one(
+        db.content.insert_one(
             {
                 "title": "The Godfather",
                 "type": "movie",
@@ -128,7 +128,7 @@ def step_quorum_rule():
 def setup_old_classic(run, db):
     past_date = datetime.utcnow() - timedelta(days=365 * 5)
     run(
-        db.media.insert_one(
+        db.content.insert_one(
             {
                 "title": "Old Classic",
                 "type": "movie",
@@ -150,7 +150,7 @@ def setup_old_classic(run, db):
 )
 def setup_recent_release(run, db):
     run(
-        db.media.insert_one(
+        db.content.insert_one(
             {
                 "title": "Recent Release",
                 "type": "movie",
@@ -175,7 +175,7 @@ def setup_recent_release(run, db):
 @given('the work "Global Blockbuster" is a "movie" with high traction')
 def setup_global_blockbuster(run, db):
     run(
-        db.media.insert_one(
+        db.content.insert_one(
             {
                 "title": "Global Blockbuster",
                 "type": "movie",
@@ -195,7 +195,7 @@ def setup_global_blockbuster(run, db):
 @given('the work "National Series" is a "series" with high traction')
 def setup_national_series(run, db):
     run(
-        db.media.insert_one(
+        db.content.insert_one(
             {
                 "title": "National Series",
                 "type": "series",
@@ -219,9 +219,9 @@ def setup_national_series(run, db):
 
 @given("the database only contains works with fewer than 50 ratings each")
 def setup_low_quorum_db(run, db):
-    run(db.media.delete_many({}))
+    run(db.content.delete_many({}))
     run(
-        db.media.insert_many(
+        db.content.insert_many(
             [
                 {
                     "title": "Obscure Indie A",
@@ -263,7 +263,7 @@ def setup_low_quorum_db(run, db):
 def setup_1990_hit(run, db):
     past = datetime.utcnow() - timedelta(days=365 * 10)
     run(
-        db.media.insert_one(
+        db.content.insert_one(
             {
                 "title": "1990 Box Office Hit",
                 "type": "movie",
@@ -283,7 +283,7 @@ def setup_1990_hit(run, db):
 @given('the work "Viral Indie" has 1,000 ratings, all recorded in the last 24 hours')
 def setup_viral_indie(run, db):
     run(
-        db.media.insert_one(
+        db.content.insert_one(
             {
                 "title": "Viral Indie",
                 "type": "movie",
@@ -310,7 +310,7 @@ def setup_viral_indie(run, db):
 )
 def setup_evergreen_classic(run, db):
     run(
-        db.media.insert_one(
+        db.content.insert_one(
             {
                 "title": "Evergreen Classic",
                 "type": "movie",
@@ -332,7 +332,7 @@ def setup_evergreen_classic(run, db):
 )
 def setup_month_darling(run, db):
     run(
-        db.media.insert_one(
+        db.content.insert_one(
             {
                 "title": "Month Darling",
                 "type": "movie",
@@ -359,7 +359,7 @@ def setup_month_darling(run, db):
 )
 def setup_all_time_legend(run, db):
     run(
-        db.media.insert_one(
+        db.content.insert_one(
             {
                 "title": "All Time Legend",
                 "type": "movie",
@@ -381,7 +381,7 @@ def setup_all_time_legend(run, db):
 )
 def setup_recent_sensation(run, db):
     run(
-        db.media.insert_one(
+        db.content.insert_one(
             {
                 "title": "Recent Sensation",
                 "type": "movie",

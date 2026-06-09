@@ -1,7 +1,7 @@
 """tests/unit/test_content_unit.py
 
 Fast, pure-Python unit tests — no DB, no HTTP.
-Tests the duration validator and schema layer in isolation.
+Tests the ContentCreate and ContentUpdate schemas in isolation.
 """
 
 from __future__ import annotations
@@ -9,79 +9,82 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from app.schemas.content import ContentCreate
+from app.schemas.content import ContentCreate, ContentUpdate
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Duration validator
-# ──────────────────────────────────────────────────────────────────────────────
-
-
-VALID_DURATIONS = [
-    "120 min",
-    "90 min",
-    "1 min",
-    "999 min",
-    "  60 min  ",   # leading/trailing whitespace is stripped
-    "180 MIN",      # case-insensitive
-]
-
-INVALID_DURATIONS = [
-    "-120 min",     # negative
-    "0 min",        # zero
-    "-1 min",       # negative
-    "120",          # missing unit
-    "min",          # no number
-    "abc min",      # non-numeric
-    "1.5 min",      # float
-    "",             # empty
-    "120 minutes",  # wrong unit
-]
-
-
-@pytest.mark.parametrize("duration", VALID_DURATIONS)
-def test_valid_duration_accepted(duration: str):
-    payload = ContentCreate(
-        title="Test",
-        genre="drama",
-        release_year=2000,
-        duration=duration,
-    )
-    assert "min" in payload.duration.lower()
-
-
-@pytest.mark.parametrize("duration", INVALID_DURATIONS)
-def test_invalid_duration_rejected(duration: str):
-    with pytest.raises(ValidationError):
-        ContentCreate(
-            title="Test",
-            genre="drama",
-            release_year=2000,
-            duration=duration,
-        )
-
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Schema defaults
-# ──────────────────────────────────────────────────────────────────────────────
+# ── ContentCreate — required fields ─────────────────────────────────────────────
 
 
 def test_create_schema_minimum_fields():
-    payload = ContentCreate(
-        title="Matrix",
-        genre="ficção científica",
-        release_year=1999,
-        duration="136 min",
+    m = ContentCreate(title="Matrix", type="movie", year=1999)
+    assert m.title == "Matrix"
+    assert m.type == "movie"
+    assert m.year == 1999
+    assert m.genre == []
+
+
+def test_create_schema_all_fields():
+    m = ContentCreate(
+        title="Fallout",
+        type="series",
+        year=2024,
+        genre=["sci-fi", "action"],
+        director="Jonathan Nolan",
+        platform="Prime Video",
+        poster_url="https://example.com/poster.jpg",
+        description="A great show.",
     )
-    assert payload.title == "Matrix"
-    assert payload.release_year == 1999
+    assert m.genre == ["sci-fi", "action"]
+    assert m.platform == "Prime Video"
 
 
-def test_create_schema_requires_title():
+@pytest.mark.parametrize("content_type", ["movie", "series", "book"])
+def test_create_valid_types(content_type: str):
+    m = ContentCreate(title="X", type=content_type, year=2000)
+    assert m.type == content_type
+
+
+def test_create_requires_title():
     with pytest.raises(ValidationError):
-        ContentCreate(genre="drama", release_year=2000, duration="90 min")  # type: ignore[call-arg]
+        ContentCreate(type="movie", year=2000)  # type: ignore[call-arg]
 
 
-def test_create_schema_requires_release_year():
+def test_create_requires_type():
     with pytest.raises(ValidationError):
-        ContentCreate(title="X", genre="drama", duration="90 min")  # type: ignore[call-arg]
+        ContentCreate(title="X", year=2000)  # type: ignore[call-arg]
+
+
+def test_create_requires_year():
+    with pytest.raises(ValidationError):
+        ContentCreate(title="X", type="movie")  # type: ignore[call-arg]
+
+
+def test_create_rejects_invalid_type():
+    with pytest.raises(ValidationError):
+        ContentCreate(title="X", type="cartoon", year=2000)
+
+
+# ── ContentUpdate — all fields optional ────────────────────────────────────────
+
+
+def test_update_schema_empty_is_valid():
+    u = ContentUpdate()
+    assert u.title is None
+    assert u.type is None
+    assert u.year is None
+
+
+def test_update_schema_partial():
+    u = ContentUpdate(title="New Title")
+    assert u.title == "New Title"
+    assert u.year is None
+
+
+def test_update_schema_genre_list():
+    u = ContentUpdate(genre=["drama", "thriller"])
+    assert u.genre == ["drama", "thriller"]
+
+
+def test_update_rejects_invalid_type():
+    with pytest.raises(ValidationError):
+        ContentUpdate(type="cartoon")

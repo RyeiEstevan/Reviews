@@ -11,168 +11,102 @@ Design notes (matching the existing harness in conftest.py):
 
 from __future__ import annotations
 
+from datetime import datetime
+
 import pytest
 from pytest_bdd import given, parsers, scenarios, then, when
 
 scenarios("../features/Content.feature")
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Background
-# ──────────────────────────────────────────────────────────────────────────────
+# ── Background ────────────────────────────────────────────────────────────────
 
 
 @given("o sistema está inicializado")
 def system_initialized():
-    """Nothing to do — the db fixture (autouse) already handles this."""
     pass
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Auth / role helpers
-# ──────────────────────────────────────────────────────────────────────────────
+# ── Auth ──────────────────────────────────────────────────────────────────────
 
 
 @given(parsers.parse('eu acesso o sistema como "{role}"'))
 def logged_in_as(role: str, auth, context):
-    """Store auth headers for the given role in context."""
     username_map = {
-        "moderador": ("moderador_user", "moderador"),
-        "usuario_comum": ("common_user", "usuario_comum"),
-        "admin": ("admin_user", "admin"),
-        "superadmin": ("super_user", "superadmin"),
+        "moderador":    ("moderador_user", "moderador"),
+        "usuario_comum": ("common_user",   "usuario_comum"),
+        "admin":        ("admin_user",     "admin"),
+        "superadmin":   ("super_user",     "superadmin"),
     }
     username, mapped_role = username_map.get(role, (role, role))
     context["headers"] = auth(username, mapped_role)
-    context["role"] = mapped_role
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Seed helpers
-# ──────────────────────────────────────────────────────────────────────────────
+# ── Seed helpers ──────────────────────────────────────────────────────────────
 
 
-@given(parsers.parse('o sistema já tem um conteúdo "{title}" com ano "{year}"'))
-def seed_content_already(title: str, year: str, run, context):
-    from app.db.models import Content
-
-    doc = Content(
-        title=title,
-        genre="gênero de teste",
-        release_year=int(year),
-        duration="90 min",
-    )
-    run(doc.insert())
-    context.setdefault("seeded", {})[title] = str(doc.id)
-
-
-@given(parsers.parse('o sistema tem um conteúdo "{title}" com ano "{year}"'))
-def seed_content(title: str, year: str, run, context):
-    from app.db.models import Content
-
-    doc = Content(
-        title=title,
-        genre="gênero de teste",
-        release_year=int(year),
-        duration="90 min",
-    )
-    run(doc.insert())
-    context.setdefault("seeded", {})[title] = str(doc.id)
-
-
-@given(parsers.parse('o sistema tem um conteúdo "{title}" com o ano "{year}"'))
-def seed_content_alt(title: str, year: str, run, context):
-    # Alias for the slightly different phrasing in the permission scenario
-    seed_content(title, year, run, context)
-
-
-@given("eu visualizo o formulário de cadastro de novo item")
-def view_form(context):
-    """Just a narrative step — no action needed."""
-    pass
-
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Form filling steps (success scenario)
-# ──────────────────────────────────────────────────────────────────────────────
-
-
-@given(parsers.parse('eu preencho o campo de título com "{title}"'))
-def fill_title(title: str, context):
-    context.setdefault("form", {})["title"] = title
-
-
-@given(parsers.parse('o campo de gênero com "{genre}"'))
-def fill_genre(genre: str, context):
-    context.setdefault("form", {})["genre"] = genre
-
-
-@given(parsers.parse('o campo de ano de lançamento com "{year}"'))
-def fill_year(year: str, context):
-    context.setdefault("form", {})["release_year"] = int(year)
-
-
-@given(parsers.parse('o campo de duração com "{duration}"'))
-def fill_duration(duration: str, context):
-    context.setdefault("form", {})["duration"] = duration
-
-
-@when('eu clico no botão "Salvar"')
-def click_save(client, context):
-    form = context.get("form", {})
-    headers = context.get("headers", {})
-    context["response"] = client.post("/content", json=form, headers=headers)
-
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Action steps
-# ──────────────────────────────────────────────────────────────────────────────
-
-
-@when(parsers.parse('eu tento cadastrar o conteúdo "{title}" com ano "{year}"'))
-def try_create_duplicate(title: str, year: str, client, context):
-    payload = {
+@given(parsers.parse('o sistema tem uma mídia "{title}" do tipo "{type}" do ano "{year}"'))
+def seed_content(title: str, type: str, year: str, run, db, context):
+    doc = {
         "title": title,
-        "genre": "gênero de teste",
-        "release_year": int(year),
-        "duration": "90 min",
+        "type": type,
+        "year": int(year),
+        "genre": [],
+        "avg_score": 0.0,
+        "review_count": 0,
+        "view_count": 0,
+        "recent_view_count": 0,
+        "recent_avg_score": 0.0,
+        "yearly_avg_score": 0.0,
+        "yearly_view_count": 0,
+        "created_at": datetime.utcnow(),
+        "updated_at": datetime.utcnow(),
     }
+    result = run(db.content.insert_one(doc))
+    context.setdefault("seeded", {})[title] = str(result.inserted_id)
+
+
+# ── Action steps ──────────────────────────────────────────────────────────────
+
+
+@when(parsers.parse('eu cadastro uma mídia com título "{title}" do tipo "{type}" do ano "{year}"'))
+def create_content(title: str, type: str, year: str, client, context):
+    payload = {"title": title, "type": type, "year": int(year), "genre": []}
     context["response"] = client.post(
         "/content", json=payload, headers=context.get("headers", {})
     )
 
 
-@when(parsers.parse('eu tento remover o conteúdo "{title}"'))
-def try_delete_content(title: str, client, context):
+@when("eu listo as mídias")
+def list_content(client, context):
+    context["response"] = client.get("/content")
+
+
+@when(parsers.parse('eu listo as mídias com filtro de tipo "{type}"'))
+def list_content_by_type(type: str, client, context):
+    context["response"] = client.get(f"/content?type={type}")
+
+
+@when(parsers.parse('eu atualizo o título da mídia "{title}" para "{new_title}"'))
+def update_content_title(title: str, new_title: str, client, context):
+    content_id = context["seeded"][title]
+    context["response"] = client.patch(
+        f"/content/{content_id}",
+        json={"title": new_title},
+        headers=context.get("headers", {}),
+    )
+    context["seeded"][new_title] = content_id
+
+
+@when(parsers.parse('eu removo a mídia "{title}"'))
+def delete_content(title: str, client, context):
     content_id = context.get("seeded", {}).get(title)
-    assert content_id, f"No seeded content named '{title}' found in context"
+    assert content_id, f"No seeded content named '{title}'"
     context["response"] = client.delete(
         f"/content/{content_id}", headers=context.get("headers", {})
     )
 
 
-@when(parsers.parse('eu tento cadastrar o conteúdo "{title}" com a duração "{duration}"'))
-def try_create_invalid_duration(title: str, duration: str, client, context):
-    payload = {
-        "title": title,
-        "genre": "ação",
-        "release_year": 2009,
-        "duration": duration,
-    }
-    context["response"] = client.post(
-        "/content", json=payload, headers=context.get("headers", {})
-    )
-
-
-@when(parsers.parse('eu marco o conteúdo "{title}" como visto'))
-def mark_as_viewed(title: str, client, context):
-    content_id = context.get("seeded", {}).get(title)
-    assert content_id
-    context["response"] = client.post(f"/content/{content_id}/view")
-
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Assertion steps
-# ──────────────────────────────────────────────────────────────────────────────
+# ── Assertion steps ───────────────────────────────────────────────────────────
 
 
 @then("o sistema retorna status 201")
@@ -180,87 +114,47 @@ def assert_201(context):
     assert context["response"].status_code == 201, context["response"].text
 
 
-@then(parsers.parse('o novo conteúdo aparece no catálogo com título "{title}"'))
-def assert_in_catalog(title: str, client, context):
+@then("o sistema retorna status 200")
+def assert_200(context):
+    assert context["response"].status_code == 200, context["response"].text
+
+
+@then("o sistema retorna status 204")
+def assert_204(context):
+    assert context["response"].status_code == 204, context["response"].text
+
+
+@then("o sistema retorna status 403")
+def assert_403(context):
+    assert context["response"].status_code == 403, context["response"].text
+
+
+@then(parsers.parse('a mídia "{title}" aparece no catálogo'))
+def assert_in_catalog(title: str, client):
     resp = client.get("/content")
     assert resp.status_code == 200
     titles = [item["title"] for item in resp.json()]
     assert title in titles, f"'{title}' not found in {titles}"
 
 
-@then("o sistema retorna uma mensagem de erro sobre duplicidade de conteúdo")
-def assert_duplicate_error(context):
-    resp = context["response"]
-    assert resp.status_code == 400, resp.text
-    assert "duplicado" in resp.json().get("detail", "").lower()
+def _titles_from(resp, client) -> list[str]:
+    """Extract titles from resp if it's a JSON list, otherwise re-fetch /content."""
+    try:
+        body = resp.json()
+        if isinstance(body, list):
+            return [item["title"] for item in body]
+    except Exception:
+        pass
+    return [item["title"] for item in client.get("/content").json()]
 
 
-@then(parsers.parse('o sistema continua tendo apenas um conteúdo "{title}" com ano "{year}"'))
-def assert_only_one(title: str, year: str, client):
-    resp = client.get("/content")
-    matches = [
-        item
-        for item in resp.json()
-        if item["title"].lower() == title.lower()
-        and item["release_year"] == int(year)
-    ]
-    assert len(matches) == 1, f"Expected exactly 1 '{title}', got {len(matches)}"
+@then(parsers.parse('o catálogo contém "{title}"'))
+def assert_catalog_contains(title: str, client, context):
+    titles = _titles_from(context["response"], client)
+    assert title in titles, f"'{title}' not found in {titles}"
 
 
-@then(parsers.parse('o sistema mantém o conteúdo "{title}" com ano "{year}"'))
-def assert_still_exists(title: str, year: str, client):
-    resp = client.get("/content")
-    matches = [
-        item
-        for item in resp.json()
-        if item["title"].lower() == title.lower()
-        and item["release_year"] == int(year)
-    ]
-    assert len(matches) >= 1, f"'{title}' ({year}) not found in catalog"
-
-
-@then("o sistema retorna uma mensagem de erro sobre permissão insuficiente")
-def assert_permission_error(context):
-    resp = context["response"]
-    assert resp.status_code in (400, 403), resp.text
-    detail = resp.json().get("detail", "").lower()
-    assert "permiss" in detail or "insuficiente" in detail or "forbidden" in detail, detail
-
-
-@then(parsers.parse('o sistema mantém o conteúdo "{title}" com o ano "{year}"'))
-def assert_still_exists_alt(title: str, year: str, client):
-    assert_still_exists(title, year, client)
-
-
-@then("o sistema retorna uma mensagem de erro sobre formato de dados inválido")
-def assert_format_error(context):
-    resp = context["response"]
-    # Pydantic validation errors come back as 422
-    assert resp.status_code in (400, 422), resp.text
-
-
-@then(parsers.parse('o sistema não realiza o cadastro do conteúdo "{title}"'))
-def assert_not_created(title: str, client):
-    resp = client.get("/content")
-    titles = [item["title"].lower() for item in resp.json()]
-    assert title.lower() not in titles, f"'{title}' should NOT be in catalog but is"
-
-
-@then(parsers.parse('o view_count do conteúdo "{title}" é "{count}"'))
-def assert_view_count(title: str, count: str, client):
-    resp = client.get("/content")
-    item = next(
-        (i for i in resp.json() if i["title"].lower() == title.lower()), None
-    )
-    assert item, f"'{title}' not found"
-    assert item["view_count"] == int(count), item
-
-
-@then(parsers.parse('o recent_view_count do conteúdo "{title}" é "{count}"'))
-def assert_recent_view_count(title: str, count: str, client):
-    resp = client.get("/content")
-    item = next(
-        (i for i in resp.json() if i["title"].lower() == title.lower()), None
-    )
-    assert item, f"'{title}' not found"
-    assert item["recent_view_count"] == int(count), item
+@then(parsers.parse('o catálogo não contém "{title}"'))
+def assert_catalog_not_contains(title: str, client, context):
+    titles = _titles_from(context["response"], client)
+    assert title not in titles, f"'{title}' should NOT be in catalog but is"

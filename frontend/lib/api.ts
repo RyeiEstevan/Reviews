@@ -34,32 +34,6 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
  
 // ── Types ────────────────────────────────────────────────────────────────────
  
-export interface ContentItem {
-  id: string;
-  title: string;
-  genre: string;
-  release_year: number;
-  duration: string;
-  rating: number;
-  review_count: number;
-  view_count: number;
-  recent_view_count: number;
-}
- 
-export interface ContentCreatePayload {
-  title: string;
-  genre: string;
-  release_year: number;
-  duration: string;
-}
- 
-export interface ContentUpdatePayload {
-  title?: string;
-  genre?: string;
-  release_year?: number;
-  duration?: string;
-}
- 
 export type User = {
   id: string;
   username: string;
@@ -90,14 +64,57 @@ export type LoginResponse = {
   username: string;
 };
  
-// ─── Home / Feed types ─────────────────────────────────────────────────────
+// ─── Content (full document from the `content` collection) ─────────────────
  
-export type MediaType = "movie" | "series" | "book";
- 
-export type MediaCard = {
+export interface ContentItem {
   id: string;
   title: string;
-  type: MediaType;
+  type: "movie" | "series" | "book";
+  year: number;
+  poster_url: string | null;
+  description: string | null;
+  genre: string[];
+  director: string | null;
+  platform: string | null;
+  avg_score: number;
+  review_count: number;
+  view_count: number;
+  recent_view_count: number;
+  recent_avg_score: number;
+  yearly_avg_score: number;
+  yearly_view_count: number;
+}
+ 
+export interface ContentCreatePayload {
+  title: string;
+  type: "movie" | "series" | "book";
+  year: number;
+  poster_url?: string | null;
+  description?: string | null;
+  genre: string[];
+  director?: string | null;
+  platform?: string | null;
+}
+ 
+export interface ContentUpdatePayload {
+  title?: string;
+  type?: "movie" | "series" | "book";
+  year?: number;
+  poster_url?: string | null;
+  description?: string | null;
+  genre?: string[];
+  director?: string | null;
+  platform?: string | null;
+}
+ 
+// ─── Home / Feed types ─────────────────────────────────────────────────────
+ 
+export type ContentType = "movie" | "series" | "book";
+ 
+export type ContentCard = {
+  id: string;
+  title: string;
+  type: ContentType;
   year: number;
   poster_url: string | null;
   avg_score: number;
@@ -107,7 +124,7 @@ export type MediaCard = {
  
 export type RankingItem = {
   position: number;
-  media: MediaCard;
+  content: ContentCard;
   value: string;
 };
  
@@ -118,13 +135,13 @@ export type RankingBlock = {
 };
  
 export type HomeResponse = {
-  trending: MediaCard[];
-  top_rated: MediaCard[];
+  trending: ContentCard[];
+  top_rated: ContentCard[];
   rankings: RankingBlock[];
 };
  
 export type Period = "month" | "year" | "all";
-export type MediaFilter = "all" | "movie" | "series" | "book";
+export type ContentFilter = "all" | "movie" | "series" | "book";
  
  
 // ── API Object ──────────────────────────────────────────────────────────────
@@ -206,38 +223,32 @@ export const api = {
   },
  
   publicNews: () => request<{ data: News[] }>("/news").then((r) => r.data),
-  
-  publicPosts: () =>
-    request<{ data: { id: string; owner: string; title: string }[] }>("/posts").then((r) => r.data),
  
   // ─── Home / public feed ────────────────────────────────────────────────
-  home: (period: Period = "month", media_type: MediaFilter = "all") => {
+  home: (period: Period = "month", media_type: ContentFilter = "all") => {
     const qs = new URLSearchParams({ period, media_type });
     return request<HomeResponse>(`/home?${qs}`);
   },
  
-  // ─── Content / Catalog ─────────────────────────────────────────────────
-  listContent: () => request<ContentItem[]>("/content"),
-  
+  // ─── Content (db.content collection) ────────────────────────────────────────
+  listContent: (params?: { type?: string; q?: string }) => {
+    const qs = new URLSearchParams();
+    if (params?.type && params.type !== "all") qs.set("type", params.type);
+    if (params?.q) qs.set("q", params.q);
+    const query = qs.toString();
+    return request<ContentItem[]>(`/content${query ? `?${query}` : ""}`);
+  },
+ 
   getContent: (id: string) => request<ContentItem>(`/content/${id}`),
-  
+ 
   createContent: (payload: ContentCreatePayload) =>
-    request<ContentItem>("/content", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    }),
-    
+    request<ContentItem>("/content", { method: "POST", body: JSON.stringify(payload) }),
+ 
   updateContent: (id: string, payload: ContentUpdatePayload) =>
-    request<ContentItem>(`/content/${id}`, {
-      method: "PATCH",
-      body: JSON.stringify(payload),
-    }),
-    
+    request<ContentItem>(`/content/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
+ 
   deleteContent: (id: string) =>
-    request<{ message: string }>(`/content/${id}`, { method: "DELETE" }),
-    
-  recordContentView: (id: string) =>
-    request<ContentItem>(`/content/${id}/view`, { method: "POST" }),
+    request<void>(`/content/${id}`, { method: "DELETE" }),
  
   // --- Fórum ---
   // Reads are public; create/delete send the Bearer token (handled in `request`).
@@ -267,4 +278,5 @@ export const api = {
     request<{ data: ForumComment }>(`/forum/comments/${commentId}/upvote`, {
       method: "POST",
     }).then((r) => r.data),
+ 
 };
