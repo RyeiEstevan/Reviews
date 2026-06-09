@@ -1,11 +1,8 @@
 from datetime import datetime, timezone
 from typing import Optional
 
-import re
-from typing import Optional
-
 from beanie import Document
-from pydantic import EmailStr, Field, field_validator
+from pydantic import EmailStr, Field
 
 
 def _utcnow() -> datetime:
@@ -80,30 +77,6 @@ class AuditLog(Document):
     class Settings:
         name = "audit_log"
 
-class Content(Document):
-    title: str
-    genre: str
-    release_year: int
-    duration: str          # "120 min"
-    rating: float = 0.0
-    review_count: int = 0
-    view_count: int = 0
-    recent_view_count: int = 0
-
-    @field_validator("duration")
-    @classmethod
-    def validate_duration(cls, v: str) -> str:
-        pattern = r"^\s*([1-9]\d*)\s*min\s*$"
-        if not re.match(pattern, v, re.IGNORECASE):
-            raise ValueError(
-                "Duração inválida. Use o formato '<número positivo> min', ex: '120 min'."
-            )
-        return v.strip()
-
-    class Settings:
-        name = "content"
-
 DOCUMENT_MODELS = [
     User, Post, Comment, CatalogContributor, News, AuditLog,
-    Content, 
 ]
