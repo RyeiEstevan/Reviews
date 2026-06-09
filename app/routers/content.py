@@ -36,7 +36,7 @@ def _to_item(doc: dict) -> ContentItem:
         year=doc.get("year", 0),
         poster_url=doc.get("poster_url"),
         description=doc.get("description"),
-        genre=doc.get("genre") or [],
+        genre=([doc["genre"]] if isinstance(doc.get("genre"), str) else doc.get("genre")) or [],
         director=doc.get("director"),
         platform=doc.get("platform"),
         avg_score=doc.get("avg_score", 0.0),
