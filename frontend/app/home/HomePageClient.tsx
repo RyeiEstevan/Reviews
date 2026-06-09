@@ -17,7 +17,8 @@
  *   4. Search bar  (data-cy="home-search")
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Clapperboard,
@@ -448,50 +449,44 @@ function CarouselSkeleton() {
 // ─── SearchBar ────────────────────────────────────────────────────────────────
 
 function SearchBar() {
+  const router = useRouter();
   const [query, setQuery] = useState("");
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!query.trim()) return;
-    // Navigate to the search results page once implemented.
-    // For now, redirect with a query string that the search route can consume.
-    window.location.href = `/search?q=${encodeURIComponent(query.trim())}`;
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const val = e.target.value;
+    setQuery(val);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!val.trim()) return;
+    debounceRef.current = setTimeout(() => {
+      router.push(`/content?q=${encodeURIComponent(val.trim())}`);
+    }, 350);
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
+    <div
       data-cy="home-search-form"
-      style={{ display: "flex", gap: "0.6rem", maxWidth: "560px" }}
+      style={{ position: "relative", maxWidth: "560px", width: "100%" }}
     >
-      <div style={{ position: "relative", flex: 1 }}>
-        <Search
-          size={16}
-          className="muted"
-          style={{
-            position: "absolute",
-            left: "0.75rem",
-            top: "50%",
-            transform: "translateY(-50%)",
-            pointerEvents: "none",
-          }}
-        />
-        <input
-          placeholder="Buscar filmes, séries, livros…"
-          data-cy="home-search-input"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          style={{ marginBottom: 0, paddingLeft: "2.2rem" }}
-        />
-      </div>
-      <button
-        type="submit"
-        data-cy="home-search-submit"
-        disabled={!query.trim()}
-      >
-        Buscar
-      </button>
-    </form>
+      <Search
+        size={16}
+        className="muted"
+        style={{
+          position: "absolute",
+          left: "0.75rem",
+          top: "50%",
+          transform: "translateY(-50%)",
+          pointerEvents: "none",
+        }}
+      />
+      <input
+        placeholder="Buscar filmes, séries, livros…"
+        data-cy="home-search-input"
+        value={query}
+        onChange={handleChange}
+        style={{ marginBottom: 0, paddingLeft: "2.2rem", width: "100%" }}
+      />
+    </div>
   );
 }
 

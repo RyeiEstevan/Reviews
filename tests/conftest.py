@@ -90,6 +90,11 @@ def patch_content_db(monkeypatch, db):
     import app.routers.content as content_module
     monkeypatch.setattr(content_module, "get_database", lambda: db)
 
+@pytest.fixture(autouse=True)
+def patch_public_db(monkeypatch, db):
+    import app.routers.public as public_module
+    monkeypatch.setattr(public_module, "get_database", lambda: db)
+
 @pytest.fixture
 def context():
     return {}

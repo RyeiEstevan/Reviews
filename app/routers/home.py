@@ -5,23 +5,11 @@ from datetime import datetime, timedelta
 
 from app.db.database import get_database
 from app.schemas.home import HomeResponse, RankingBlock, RankingItem
-from app.schemas.content import ContentCard
+from app.schemas.content import doc_to_card
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-
-def doc_to_card(doc: dict) -> ContentCard:
-    return ContentCard(
-        id=str(doc.get("_id", "")),
-        title=doc.get("title", ""),
-        type=doc.get("type") if doc.get("type") in ("movie", "series", "book") else "movie",
-        year=doc.get("year", 0),
-        poster_url=doc.get("poster_url"),
-        avg_score=doc.get("avg_score", 0.0),
-        review_count=doc.get("review_count", 0),
-        platform=doc.get("platform"),
-    )
 
 
 def format_view_count(n: int) -> str:
@@ -30,6 +18,19 @@ def format_view_count(n: int) -> str:
     if n >= 1_000:
         return f"{n / 1_000:.0f}K"
     return str(n)
+
+
+_VIEW_SORT = {
+    "month": "recent_view_count",
+    "year":  "yearly_view_count",
+    "all":   "view_count",
+}
+
+_SCORE_SORT = {
+    "month": "recent_avg_score",
+    "year":  "yearly_avg_score",
+    "all":   "avg_score",
+}
 
 
 @router.get("/home", response_model=HomeResponse, summary="Homepage data")
@@ -78,16 +79,24 @@ async def get_home(
             "WARN: top_rated aggregation returned 0 items. Quorum threshold not met for current period."
         )
 
+    # ── Rankings ──────────────────────────────────────────────────────────────
+    view_sort = _VIEW_SORT.get(period, "view_count")
+    score_sort = _SCORE_SORT.get(period, "avg_score")
+
+    if period == "all":
+        logger.error(
+            "ERROR: trending using view_count for period=all — recent_view_count not available"
+        )
+
     # ── Ranking: Most Viewed ──────────────────────────────────────────────────
     viewed_cursor = db.content.find(type_filter).sort(view_sort, -1).limit(5)
     viewed_items = []
     pos = 1
     async for doc in viewed_cursor:
-        card = doc_to_card(doc)
         viewed_items.append(RankingItem(
             position=pos,
             content=doc_to_card(doc),
-            value=format_view_count(val),
+            value=format_view_count(doc.get(view_sort, 0)),
         ))
         pos += 1
 
@@ -96,11 +105,10 @@ async def get_home(
     rated_items = []
     pos = 1
     async for doc in rated_cursor:
-        card = doc_to_card(doc)
         rated_items.append(RankingItem(
             position=pos,
             content=doc_to_card(doc),
-            value=f"{val:.1f}",
+            value=f"{doc.get(score_sort, 0.0):.1f}",
         ))
         pos += 1
 

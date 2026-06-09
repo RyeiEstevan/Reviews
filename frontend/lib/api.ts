@@ -21,7 +21,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   };
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  const res = await fetch(`${API_URL}${path}`, { ...options, headers });
+  const res = await fetch(`${API_URL}${path}`, { ...options, headers, cache: "no-store" });
   const text = await res.text();
   const body = text ? JSON.parse(text) : null;
 
@@ -143,6 +143,12 @@ export type HomeResponse = {
 export type Period = "month" | "year" | "all";
 export type ContentFilter = "all" | "movie" | "series" | "book";
 
+export type SearchResponse = {
+  query: string;
+  results: ContentCard[];
+  count: number;
+};
+
 
 // ── API Object ──────────────────────────────────────────────────────────────
 
@@ -231,5 +237,8 @@ export const api = {
 
   deleteContent: (id: string) =>
     request<void>(`/content/${id}`, { method: "DELETE" }),
+
+  search: (q: string) =>
+    request<SearchResponse>(`/search?q=${encodeURIComponent(q)}`),
 
 };

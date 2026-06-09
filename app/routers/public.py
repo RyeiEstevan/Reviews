@@ -2,23 +2,9 @@ from fastapi import APIRouter, Query
 
 from app.db.database import get_database
 from app.db.models import News, Post
-from app.schemas.home import MediaCard, SearchResponse
+from app.schemas.content import SearchResponse, doc_to_card
 
 router = APIRouter(tags=["public"])
-
-
-def doc_to_card(doc: dict) -> MediaCard:
-    """Convert MongoDB document to MediaCard."""
-    return MediaCard(
-        id=str(doc["_id"]),
-        title=doc["title"],
-        type=doc["type"],
-        year=doc.get("year", 2000),  # Default year for test compatibility
-        poster_url=doc.get("poster_url"),
-        avg_score=doc.get("avg_score", 0.0),
-        review_count=doc.get("review_count", 0),
-        platform=doc.get("platform"),
-    )
 
 
 @router.get("/posts")
@@ -54,7 +40,7 @@ async def search_media(q: str = Query(default="", description="Search term")):
         ]
     }
     
-    cursor = db.media.find(search_filter).limit(50)
+    cursor = db.content.find(search_filter).limit(50)
     results = [doc_to_card(doc) async for doc in cursor]
     
     return SearchResponse(query=q, results=results, count=len(results))

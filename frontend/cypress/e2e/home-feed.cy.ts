@@ -163,25 +163,23 @@ describe("Home feed page", () => {
     cy.get("[data-cy=top-rated-carousel-prev]").should("be.disabled");
   });
 
-  // ── Scenario 4: Search bar navigates to results ────────────────────────────
-  it("navigates to the search results page on submit (LandingPage #4)", () => {
+  // ── Scenario 4: Search bar navigates to catalog ───────────────────────────
+  it("navigates to the catalog page when typing in the search bar (LandingPage #4)", () => {
     interceptHome("homeLoad");
     cy.visit("/home");
     cy.wait("@homeLoad");
 
     cy.get("[data-cy=home-search-input]").type("Fallout");
-    cy.get("[data-cy=home-search-submit]").click();
-
-    cy.url().should("include", "q=Fallout");
+    cy.url().should("include", "/content?q=Fallout", { timeout: 5000 });
   });
 
-  it("search submit button is disabled when query is empty", () => {
+  it("does not navigate when search query is empty", () => {
     interceptHome("homeLoad");
     cy.visit("/home");
     cy.wait("@homeLoad");
 
     cy.get("[data-cy=home-search-input]").clear();
-    cy.get("[data-cy=home-search-submit]").should("be.disabled");
+    cy.url().should("include", "/home");
   });
 
   // ── Period filter changes API call ─────────────────────────────────────────
