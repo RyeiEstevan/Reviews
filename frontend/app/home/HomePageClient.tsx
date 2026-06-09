@@ -603,7 +603,7 @@ export default function HomePage() {
           <div style={{ marginBottom: "1rem", height: "1.5rem", width: "160px" }} className="skeleton" />
           <CarouselSkeleton />
         </section>
-      ) : !error ? (
+      ) : (
         <HorizontalCarousel
           title="Em Alta"
           eyebrow="Últimos 30 dias"
@@ -611,7 +611,7 @@ export default function HomePage() {
           items={data?.trending ?? []}
           dataCy="trending-carousel"
         />
-      ) : null}
+      )}
 
       {/* ── Top-rated carousel ── */}
       {loading ? (
@@ -619,15 +619,15 @@ export default function HomePage() {
           <div style={{ marginBottom: "1rem", height: "1.5rem", width: "220px" }} className="skeleton" />
           <CarouselSkeleton />
         </section>
-      ) : !error ? (
+      ) : (
         <HorizontalCarousel
-          title="Mais avaliados"
+          title="Mais bem avaliados"
           eyebrow="Últimos 30 dias"
           icon={<Star size={20} style={{ color: "var(--gold)" }} />}
           items={data?.top_rated ?? []}
           dataCy="top-rated-carousel"
         />
-      ) : null}
+      )}
 
       {/* ── Rankings ── */}
       <section data-cy="rankings" style={{ marginBottom: "2rem" }}>

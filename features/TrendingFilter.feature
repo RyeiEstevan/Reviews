@@ -32,10 +32,21 @@ Scenario: Quorum failure due to insufficient volume
   And returns an empty dataset instead of listing works with low quorum
   And the system writes a "WARN: top_rated aggregation returned 0 items. Quorum threshold not met for current period." record for monitoring.
 
-Scenario: Relevance failure due to expired time window
+Scenario: All-time period does not override the trending temporal lock
   Given the work "1990 Box Office Hit" has 1,000,000 total ratings and 0 ratings in the last 30 days
   And the work "Viral Indie" has 1,000 ratings, all recorded in the last 24 hours
-  When the service processes the "Trending" ranking incorrectly ignoring the date filter
-  Then the system should identify the inconsistency between total volume and time-based volume
-  And the work "1990 Box Office Hit" should not appear at the top of the "Trending" ranking
-  And an "ERROR: trending aggregation bypassed temporal date_filter." alert should be recorded in the logs.
+  When the service processes the "Trending" ranking with period set to "all"
+  Then the trending list is still ranked by recent 30-day view activity
+  And the work "Viral Indie" should rank above "1990 Box Office Hit" in the trending list
+
+Scenario: Top Rated is locked to the 30-day window regardless of period
+  Given the work "Evergreen Classic" has yearly_avg_score 9.2, recent_avg_score 6.0, and 100 ratings
+  And the work "Month Darling" has yearly_avg_score 7.0, recent_avg_score 9.5, and 100 ratings
+  When the service receives a request with period set to "year"
+  Then the top_rated list ranks "Month Darling" above "Evergreen Classic"
+
+Scenario: Top Rated ignores global score and always ranks by recent 30-day score
+  Given the work "All Time Legend" has avg_score 9.8, yearly_avg_score 6.0, and 100 ratings
+  And the work "Recent Sensation" has avg_score 7.0, yearly_avg_score 9.5, and 100 ratings
+  When the service receives a request with period set to "all"
+  Then the top_rated list ranks "Recent Sensation" above "All Time Legend"
