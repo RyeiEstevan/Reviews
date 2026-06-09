@@ -24,25 +24,28 @@ class User(Document):
 
 
 class Post(Document):
-    """Stand-in owned by the Fórum feature; admin only hides/cascades it."""
-
     owner: str
     title: str
-    hidden: bool = False
+    content: str = ""
+    category: Optional[str] = None     # Filmes | Séries | Livros
+    hidden: bool = False               # set by the admin ban cascade
+    created_at: datetime = Field(default_factory=_utcnow)
 
     class Settings:
         name = "posts"
+        indexes = ["category"]         # speeds the category filter (ForumSearch)
 
 
 class Comment(Document):
-    """Stand-in owned by the Fórum feature; admin only cascades it."""
-
     author: str
     content: str
     post_id: Optional[str] = None
+    upvoters: list[str] = Field(default_factory=list)  # usernames who upvoted; count = len()
+    created_at: datetime = Field(default_factory=_utcnow)
 
     class Settings:
         name = "comments"
+        indexes = ["post_id"]          # speeds loading a post's comment thread
 
 
 class CatalogContributor(Document):
