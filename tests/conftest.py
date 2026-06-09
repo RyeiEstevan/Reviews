@@ -56,9 +56,13 @@ def loop():
 
 @pytest.fixture(autouse=True)
 def db(loop):
+    from app.db import database as db_module
     database = AsyncMongoMockClient()["reviews_test"]
     loop.run_until_complete(init_beanie(database=database, document_models=DOCUMENT_MODELS))
-    return database
+    # Patch the global database so get_database() works in tests
+    db_module.database = database
+    yield database
+    db_module.database = None
 
 
 @pytest.fixture
