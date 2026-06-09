@@ -1,5 +1,4 @@
 import "./globals.css";
-import "./content/content.css";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Fraunces, Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
@@ -31,7 +30,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${display.variable} ${sans.variable} ${mono.variable}`}>
-      <body suppressHydrationWarning>{children}</body>
+      <body>{children}</body>
     </html>
   );
 }
