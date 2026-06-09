@@ -31,7 +31,11 @@ export default function LoginPage() {
       const res = await api.login(email, password);
       
       // Salva a sessão
-      setSession({ token: res.access_token, role: res.role, username: res.username });
+      setSession({ 
+        token: res.access_token, 
+        role: res.role || "user", 
+        username: res.username || email.split('@')[0] 
+      });
       
       // Redireciona com base no papel (role) ou no modo selecionado
       if (isAdminMode || res.role === "admin") {
