@@ -21,7 +21,7 @@ def test_format_view_count():
 
 
 def test_doc_to_card_with_all_fields():
-    """Ensures that the mapping from MongoDB dictionary to MediaCard schema is correct."""
+    """Ensures that the mapping from MongoDB dictionary to ContentCard schema is correct."""
     doc = {
         "_id": "60a7c1b2f1a2c3d4e5f6a7b8",
         "title": "Dune: Part Two",
