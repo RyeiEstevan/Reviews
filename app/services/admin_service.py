@@ -8,6 +8,7 @@ raise before any audit entry is written.
 from typing import Optional
 
 from fastapi import HTTPException
+from pymongo.errors import DuplicateKeyError
 
 from app.core.security import hash_password
 from app.db.models import (
@@ -48,13 +49,19 @@ class AdminService:
             raise HTTPException(status_code=403, detail="only superadmin can create admin accounts")
         if await User.find_one(User.username == data.username):
             raise HTTPException(status_code=409, detail="username already exists")
+        # Atlas has a non-sparse unique index on email; store a placeholder so null
+        # is never written (two null values would violate the constraint).
+        effective_email = data.email or f"_{data.username}@no-reply.internal"
         user = User(
             username=data.username,
-            email=data.email,
+            email=effective_email,
             password_hash=hash_password(data.password),
             role=data.role,
         )
-        await user.insert()
+        try:
+            await user.insert()
+        except DuplicateKeyError:
+            raise HTTPException(status_code=409, detail="email already in use")
         await AuditService.record(actor["username"], "create_user", "user", data.username)
         return user
 

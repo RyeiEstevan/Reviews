@@ -7,7 +7,7 @@ import {
   Library,
   Newspaper,
   ScrollText,
-  Rss,
+  Film,
   ShieldAlert,
   ArrowUpRight,
 } from "lucide-react";
@@ -16,14 +16,14 @@ import { PageHeader, MetricCard } from "@/components/ui";
 
 // `cy` keeps the data-cy selector stable while `title` is the translated label.
 const CARDS = [
-  { href: "/users", cy: "users", title: "Usuários", desc: "Crie, edite, bana e exclua contas.", Icon: Users },
-  { href: "/artists", cy: "catalog", title: "Catálogo", desc: "Cadastre e busque artistas, autores e dubladores.", Icon: Library },
-  { href: "/news", cy: "news", title: "Notícias", desc: "Publique notícias com tags no feed público.", Icon: Newspaper },
-  { href: "/audit", cy: "audit", title: "Auditoria", desc: "Consulte o histórico das ações administrativas.", Icon: ScrollText },
-  { href: "/feed", cy: "public", title: "Feed público", desc: "Veja o feed público sem autenticação.", Icon: Rss },
+  { href: "/users",          cy: "users",    title: "Usuários",      desc: "Crie, edite, bana e exclua contas.",                         Icon: Users      },
+  { href: "/artists",        cy: "catalog",  title: "Catálogo",      desc: "Cadastre e busque artistas, autores e dubladores.",           Icon: Library    },
+  { href: "/content-manage", cy: "content",  title: "Conteúdo",      desc: "Gerencie filmes, séries e livros do catálogo.",               Icon: Film       },
+  { href: "/news",           cy: "news",     title: "Notícias",      desc: "Publique notícias com tags no feed público.",                 Icon: Newspaper  },
+  { href: "/audit",          cy: "audit",    title: "Auditoria",     desc: "Consulte o histórico das ações administrativas.",             Icon: ScrollText },
 ];
 
-type Stats = { users: number; banned: number; contributors: number; news: number };
+type Stats = { users: number; banned: number; contributors: number; news: number; content: number };
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null);
@@ -31,10 +31,11 @@ export default function DashboardPage() {
   useEffect(() => {
     let alive = true;
     (async () => {
-      const [users, artists, news] = await Promise.all([
+      const [users, artists, news, content] = await Promise.all([
         api.listUsers().catch(() => null),
         api.listArtists("").catch(() => null),
         api.publicNews().catch(() => null),
+        api.listContent().catch(() => null),
       ]);
       if (!alive) return;
       setStats({
@@ -42,6 +43,7 @@ export default function DashboardPage() {
         banned: users?.filter((u) => u.status === "banned").length ?? 0,
         contributors: artists?.length ?? 0,
         news: news?.length ?? 0,
+        content: content?.length ?? 0,
       });
     })();
     return () => {
@@ -65,6 +67,7 @@ export default function DashboardPage() {
         <MetricCard icon={<ShieldAlert size={20} />} value={metric(stats?.banned ?? 0)} label="Usuários banidos" />
         <MetricCard icon={<Library size={20} />} value={metric(stats?.contributors ?? 0)} label="Contribuidores no catálogo" />
         <MetricCard icon={<Newspaper size={20} />} value={metric(stats?.news ?? 0)} label="Notícias publicadas" />
+        <MetricCard icon={<Film size={20} />} value={metric(stats?.content ?? 0)} label="Obras cadastradas" />
       </div>
 
       <div className="nav-label" style={{ padding: "0 0 0.4rem" }}>

@@ -43,6 +43,9 @@ class SyncClient:
     def put(self, url, **kw):
         return self._run(self._ac.put(url, **kw))
 
+    def patch(self, url, **kw):
+        return self._run(self._ac.patch(url, **kw))
+
     def delete(self, url, **kw):
         return self._run(self._ac.delete(url, **kw))
 
@@ -77,6 +80,11 @@ def run(loop, db):
 def patch_home_db(monkeypatch, db):
     import app.routers.home as home_module
     monkeypatch.setattr(home_module, "get_database", lambda: db)
+
+@pytest.fixture(autouse=True)
+def patch_content_db(monkeypatch, db):
+    import app.routers.content as content_module
+    monkeypatch.setattr(content_module, "get_database", lambda: db)
 
 @pytest.fixture
 def context():

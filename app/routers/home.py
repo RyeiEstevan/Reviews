@@ -4,17 +4,18 @@ from typing import Literal
 from datetime import datetime, timedelta
 
 from app.db.database import get_database
-from app.schemas.home import HomeResponse, MediaCard, RankingBlock, RankingItem
+from app.schemas.home import HomeResponse, RankingBlock, RankingItem
+from app.schemas.content import ContentCard
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
-def doc_to_card(doc: dict) -> MediaCard:
-    return MediaCard(
+def doc_to_card(doc: dict) -> ContentCard:
+    return ContentCard(
         id=str(doc.get("_id", "")),
         title=doc.get("title", ""),
-        type=doc.get("type", ""),
+        type=doc.get("type") if doc.get("type") in ("movie", "series", "book") else "movie",
         year=doc.get("year", 0),
         poster_url=doc.get("poster_url"),
         avg_score=doc.get("avg_score", 0.0),
@@ -68,7 +69,7 @@ async def get_home(
 
     # ── Trending ──────────────────────────────────────────────────────────────
     # Always locked to the 30-day rolling window regardless of `period`.
-    trending_cursor = db.media.find(type_filter).sort("recent_view_count", -1).limit(10)
+    trending_cursor = db.content.find(type_filter).sort("recent_view_count", -1).limit(10)
     trending = [doc_to_card(doc) async for doc in trending_cursor]
 
     # ── Top Rated ─────────────────────────────────────────────────────────────
@@ -76,7 +77,7 @@ async def get_home(
     # Like trending, this carousel is locked to the 30-day window (recent_avg_score)
     # regardless of the period parameter.
     top_rated_filter = {**type_filter, "review_count": {"$gte": 50}}
-    top_rated_cursor = db.media.find(top_rated_filter).sort("recent_avg_score", -1).limit(10)
+    top_rated_cursor = db.content.find(top_rated_filter).sort("recent_avg_score", -1).limit(10)
     top_rated = [doc_to_card(doc) async for doc in top_rated_cursor]
 
     if len(top_rated) == 0:
@@ -85,27 +86,27 @@ async def get_home(
         )
 
     # ── Ranking: Most Viewed ──────────────────────────────────────────────────
-    viewed_cursor = db.media.find(type_filter).sort(view_sort, -1).limit(5)
+    viewed_cursor = db.content.find(type_filter).sort(view_sort, -1).limit(5)
     viewed_items = []
     pos = 1
     async for doc in viewed_cursor:
         val = doc.get(view_sort, doc.get("view_count", 0))
         viewed_items.append(RankingItem(
             position=pos,
-            media=doc_to_card(doc),
+            content=doc_to_card(doc),
             value=format_view_count(val),
         ))
         pos += 1
 
     # ── Ranking: Top Rated ────────────────────────────────────────────────────
-    rated_cursor = db.media.find(top_rated_filter).sort(score_sort, -1).limit(5)
+    rated_cursor = db.content.find(top_rated_filter).sort(score_sort, -1).limit(5)
     rated_items = []
     pos = 1
     async for doc in rated_cursor:
         val = doc.get(score_sort, doc.get("avg_score", 0.0))
         rated_items.append(RankingItem(
             position=pos,
-            media=doc_to_card(doc),
+            content=doc_to_card(doc),
             value=f"{val:.1f}",
         ))
         pos += 1
@@ -113,13 +114,13 @@ async def get_home(
     # ── Ranking: New Arrivals ─────────────────────────────────────────────────
     # created_at filter is appropriate here — "new" literally means recently added.
     new_filter = {**type_filter, "created_at": {"$gte": now - timedelta(days=14)}}
-    new_cursor = db.media.find(new_filter).sort("created_at", -1).limit(5)
+    new_cursor = db.content.find(new_filter).sort("created_at", -1).limit(5)
     new_items = []
     pos = 1
     async for doc in new_cursor:
         new_items.append(RankingItem(
             position=pos,
-            media=doc_to_card(doc),
+            content=doc_to_card(doc),
             value="New",
         ))
         pos += 1

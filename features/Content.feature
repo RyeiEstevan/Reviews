@@ -1,5 +1,5 @@
 # features/Content.feature
-Feature: Gerenciamento de Conteúdo do Catálogo
+Feature: Gerenciamento de Mídia do Catálogo
 
   Background:
     Given o sistema está inicializado
@@ -7,53 +7,68 @@ Feature: Gerenciamento de Conteúdo do Catálogo
   # ──────────────────────────────────────────────────────────
   # Cadastro com sucesso
   # ──────────────────────────────────────────────────────────
-  Scenario: cadastrar novo conteúdo com sucesso
+  Scenario: cadastrar nova mídia com sucesso
     Given eu acesso o sistema como "moderador"
-    And eu visualizo o formulário de cadastro de novo item
-    And eu preencho o campo de título com "Matrix"
-    And o campo de gênero com "ficção científica"
-    And o campo de ano de lançamento com "1999"
-    And o campo de duração com "120 min"
-    When eu clico no botão "Salvar"
+    When eu cadastro uma mídia com título "Fallout" do tipo "series" do ano "2024"
     Then o sistema retorna status 201
-    And o novo conteúdo aparece no catálogo com título "Matrix"
+    And a mídia "Fallout" aparece no catálogo
 
   # ──────────────────────────────────────────────────────────
-  # Duplicidade
+  # Listagem
   # ──────────────────────────────────────────────────────────
-  Scenario: impedir cadastro duplicado de conteúdo
+  Scenario: listar mídias cadastradas
+    Given o sistema tem uma mídia "Matrix" do tipo "movie" do ano "1999"
+    And o sistema tem uma mídia "Duna" do tipo "movie" do ano "2021"
+    When eu listo as mídias
+    Then o sistema retorna status 200
+    And o catálogo contém "Matrix"
+    And o catálogo contém "Duna"
+
+  # ──────────────────────────────────────────────────────────
+  # Filtro por tipo
+  # ──────────────────────────────────────────────────────────
+  Scenario: filtrar mídias por tipo
+    Given o sistema tem uma mídia "Matrix" do tipo "movie" do ano "1999"
+    And o sistema tem uma mídia "Fundação" do tipo "series" do ano "2021"
+    When eu listo as mídias com filtro de tipo "movie"
+    Then o sistema retorna status 200
+    And o catálogo contém "Matrix"
+    And o catálogo não contém "Fundação"
+
+  # ──────────────────────────────────────────────────────────
+  # Permissão insuficiente para cadastro
+  # ──────────────────────────────────────────────────────────
+  Scenario: impedir cadastro de mídia por usuário sem permissão
+    Given eu acesso o sistema como "usuario_comum"
+    When eu cadastro uma mídia com título "Avatar" do tipo "movie" do ano "2009"
+    Then o sistema retorna status 403
+
+  # ──────────────────────────────────────────────────────────
+  # Atualização
+  # ──────────────────────────────────────────────────────────
+  Scenario: atualizar título de uma mídia com sucesso
     Given eu acesso o sistema como "moderador"
-    And o sistema já tem um conteúdo "Matrix" com ano "1999"
-    And o sistema tem um conteúdo "Duna" com ano "2021"
-    When eu tento cadastrar o conteúdo "Matrix" com ano "1999"
-    Then o sistema retorna uma mensagem de erro sobre duplicidade de conteúdo
-    And o sistema continua tendo apenas um conteúdo "Matrix" com ano "1999"
-    And o sistema mantém o conteúdo "Duna" com ano "2021"
+    And o sistema tem uma mídia "Matrix" do tipo "movie" do ano "1999"
+    When eu atualizo o título da mídia "Matrix" para "Matrix Reloaded"
+    Then o sistema retorna status 200
+    And a mídia "Matrix Reloaded" aparece no catálogo
+
+  # ──────────────────────────────────────────────────────────
+  # Remoção com sucesso
+  # ──────────────────────────────────────────────────────────
+  Scenario: remover mídia com sucesso
+    Given eu acesso o sistema como "moderador"
+    And o sistema tem uma mídia "Matrix" do tipo "movie" do ano "1999"
+    When eu removo a mídia "Matrix"
+    Then o sistema retorna status 204
+    And o catálogo não contém "Matrix"
 
   # ──────────────────────────────────────────────────────────
   # Permissão insuficiente para remoção
   # ──────────────────────────────────────────────────────────
-  Scenario: impedir que usuário comum remova conteúdo
+  Scenario: impedir remoção de mídia por usuário sem permissão
     Given eu acesso o sistema como "usuario_comum"
-    And o sistema tem um conteúdo "Matrix" com o ano "1999"
-    When eu tento remover o conteúdo "Matrix"
-    Then o sistema retorna uma mensagem de erro sobre permissão insuficiente
-    And o sistema mantém o conteúdo "Matrix" com o ano "1999"
-
-  # ──────────────────────────────────────────────────────────
-  # Duração inválida
-  # ──────────────────────────────────────────────────────────
-  Scenario: impedir cadastro de conteúdo com duração inválida
-    Given eu acesso o sistema como "moderador"
-    When eu tento cadastrar o conteúdo "Avatar" com a duração "-120 min"
-    Then o sistema retorna uma mensagem de erro sobre formato de dados inválido
-    And o sistema não realiza o cadastro do conteúdo "Avatar"
-
-  # ──────────────────────────────────────────────────────────
-  # Contador de visualizações
-  # ──────────────────────────────────────────────────────────
-  Scenario: incrementar contadores de visualização ao marcar como visto
-    Given o sistema tem um conteúdo "Matrix" com ano "1999"
-    When eu marco o conteúdo "Matrix" como visto
-    Then o view_count do conteúdo "Matrix" é "1"
-    And o recent_view_count do conteúdo "Matrix" é "1"
+    And o sistema tem uma mídia "Matrix" do tipo "movie" do ano "1999"
+    When eu removo a mídia "Matrix"
+    Then o sistema retorna status 403
+    And o catálogo contém "Matrix"

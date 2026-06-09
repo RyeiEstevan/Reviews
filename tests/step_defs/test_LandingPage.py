@@ -60,9 +60,9 @@ def test_searching_for_a_work_directly_from_the_landing_page():
 def i_am_on_landing_page(client, context, run, db):
     """Seed the isolated DB and pre-load the home endpoint response."""
     now = datetime.utcnow()
-    run(db.media.delete_many({}))
+    run(db.content.delete_many({}))
     run(
-        db.media.insert_many(
+        db.content.insert_many(
             [
                 {
                     "title": "Shogun",
@@ -141,7 +141,7 @@ def check_trending_order(context, run, db):
     items = context["trending_list"]
     titles_in_order = [item["title"] for item in items]
 
-    works = run(db.media.find({"title": {"$in": titles_in_order}}).to_list(length=100))
+    works = run(db.content.find({"title": {"$in": titles_in_order}}).to_list(length=100))
     view_by_title = {w["title"]: w["recent_view_count"] for w in works}
 
     for i in range(len(titles_in_order) - 1):
