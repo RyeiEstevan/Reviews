@@ -32,22 +32,6 @@ def format_view_count(n: int) -> str:
     return str(n)
 
 
-# Rolling-window field names per period.
-# Trending is intentionally excluded: it is always locked to the 30-day window
-# (recent_view_count) regardless of the period parameter.
-_VIEW_SORT = {
-    "month": "recent_view_count",
-    "year":  "yearly_view_count",
-    "all":   "view_count",
-}
-
-_SCORE_SORT = {
-    "month": "recent_avg_score",
-    "year":  "yearly_avg_score",
-    "all":   "avg_score",
-}
-
-
 @router.get("/home", response_model=HomeResponse, summary="Homepage data")
 async def get_home(
     period: Literal["month", "year", "all"] = Query("month"),
@@ -55,17 +39,26 @@ async def get_home(
 ):
     """
     Returns all data required to render the homepage:
-    - Trending carousel     — always sorted by recent_view_count (30-day lock)
-    - Top Rated carousel    — sorted by the period-appropriate score field
-    - Rankings              — Most Viewed / Top Rated / New Arrivals
+    - Trending carousel
+    - Top Rated carousel
+    - Rankings (Most Viewed, Top Rated, New Arrivals)
     """
     db = get_database()
+
+    # --- period filter ---
     now = datetime.utcnow()
+    date_filter: dict = {}
+    if period == "month":
+        date_filter = {"created_at": {"$gte": now - timedelta(days=30)}}
+    elif period == "year":
+        date_filter = {"created_at": {"$gte": now - timedelta(days=365)}}
 
-    type_filter: dict = {} if media_type == "all" else {"type": media_type}
+    # --- type filter ---
+    type_filter: dict = {}
+    if media_type != "all":
+        type_filter = {"type": media_type}
 
-    view_sort  = _VIEW_SORT[period]
-    score_sort = _SCORE_SORT[period]
+    combined_filter = {**date_filter, **type_filter}
 
     # ── Trending ──────────────────────────────────────────────────────────────
     # Always locked to the 30-day rolling window regardless of `period`.
@@ -90,7 +83,7 @@ async def get_home(
     viewed_items = []
     pos = 1
     async for doc in viewed_cursor:
-        val = doc.get(view_sort, doc.get("view_count", 0))
+        card = doc_to_card(doc)
         viewed_items.append(RankingItem(
             position=pos,
             content=doc_to_card(doc),
@@ -103,7 +96,7 @@ async def get_home(
     rated_items = []
     pos = 1
     async for doc in rated_cursor:
-        val = doc.get(score_sort, doc.get("avg_score", 0.0))
+        card = doc_to_card(doc)
         rated_items.append(RankingItem(
             position=pos,
             content=doc_to_card(doc),
@@ -118,6 +111,7 @@ async def get_home(
     new_items = []
     pos = 1
     async for doc in new_cursor:
+        card = doc_to_card(doc)
         new_items.append(RankingItem(
             position=pos,
             content=doc_to_card(doc),
@@ -128,9 +122,9 @@ async def get_home(
     period_label = {"month": "This Month", "year": "This Year", "all": "All Time"}[period]
 
     rankings = [
-        RankingBlock(title="Most Viewed",  badge=period_label, items=viewed_items),
-        RankingBlock(title="Top Rated",    badge=period_label, items=rated_items),
-        RankingBlock(title="New Arrivals", badge="This Week",  items=new_items),
+        RankingBlock(title="Most Viewed",  badge=period_label,  items=viewed_items),
+        RankingBlock(title="Top Rated",    badge=period_label,  items=rated_items),
+        RankingBlock(title="New Arrivals", badge="This Week",    items=new_items),
     ]
 
     return HomeResponse(

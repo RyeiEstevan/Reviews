@@ -20,3 +20,10 @@ class HomeResponse(BaseModel):
     trending: List[ContentCard]
     top_rated: List[ContentCard]
     rankings: List[RankingBlock]
+
+
+class SearchResponse(BaseModel):
+    """Search results for media content."""
+    query: str
+    results: List[MediaCard]
+    count: int
