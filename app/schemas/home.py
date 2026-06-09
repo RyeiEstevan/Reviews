@@ -23,7 +23,7 @@ class HomeResponse(BaseModel):
 
 
 class SearchResponse(BaseModel):
-    """Search results for media content."""
+    """Search results for content."""
     query: str
-    results: List[MediaCard]
+    results: List[ContentCard]
     count: int

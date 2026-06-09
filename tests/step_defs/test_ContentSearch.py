@@ -7,6 +7,7 @@ Frontend scenarios are left as stubs (tested via Cypress E2E).
 """
 
 from datetime import datetime, UTC
+import pytest
 from pytest_bdd import given, scenario, then, when, parsers
 
 
@@ -29,21 +30,25 @@ def test_backend_returns_empty_results_for_nonexistent_term():
 # --------------------------------------------------------------------------- #
 # Scenario bindings - Frontend scenarios (stub - tested via Cypress)
 # --------------------------------------------------------------------------- #
+@pytest.mark.skip(reason="Frontend scenario — tested via Cypress E2E")
 @scenario(FEATURE, "search content by exact match")
 def test_search_content_by_exact_match():
     """search content by exact match."""
 
 
+@pytest.mark.skip(reason="Frontend scenario — tested via Cypress E2E")
 @scenario(FEATURE, "search content with a spelling mistake")
 def test_search_content_with_a_spelling_mistake():
     """search content with a spelling mistake."""
 
 
+@pytest.mark.skip(reason="Frontend scenario — tested via Cypress E2E")
 @scenario(FEATURE, "search content with a non-existent term")
 def test_search_content_with_a_nonexistent_term():
     """search content with a non-existent term."""
 
 
+@pytest.mark.skip(reason="Frontend scenario — tested via Cypress E2E")
 @scenario(FEATURE, "search content by title")
 def test_search_content_by_title():
     """search content by title."""
@@ -70,7 +75,7 @@ def given_movie_in_db(run, db, title):
         "created_at": datetime.now(UTC),
         "updated_at": datetime.now(UTC),
     }
-    run(db.media.insert_one(media_doc))
+    run(db.content.insert_one(media_doc))
 
 
 @given(parsers.parse('the system has a series titled "{title}" stored in the database'))
@@ -91,7 +96,7 @@ def given_series_in_db(run, db, title):
         "created_at": datetime.now(UTC),
         "updated_at": datetime.now(UTC),
     }
-    run(db.media.insert_one(media_doc))
+    run(db.content.insert_one(media_doc))
 
 
 # --------------------------------------------------------------------------- #

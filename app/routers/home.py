@@ -32,6 +32,19 @@ def format_view_count(n: int) -> str:
     return str(n)
 
 
+_VIEW_SORT = {
+    "month": "recent_view_count",
+    "year":  "yearly_view_count",
+    "all":   "view_count",
+}
+
+_SCORE_SORT = {
+    "month": "recent_avg_score",
+    "year":  "yearly_avg_score",
+    "all":   "avg_score",
+}
+
+
 @router.get("/home", response_model=HomeResponse, summary="Homepage data")
 async def get_home(
     period: Literal["month", "year", "all"] = Query("month"),
@@ -78,16 +91,24 @@ async def get_home(
             "WARN: top_rated aggregation returned 0 items. Quorum threshold not met for current period."
         )
 
+    # ── Rankings ──────────────────────────────────────────────────────────────
+    view_sort = _VIEW_SORT.get(period, "view_count")
+    score_sort = _SCORE_SORT.get(period, "avg_score")
+
+    if period == "all":
+        logger.error(
+            "ERROR: trending using view_count for period=all — recent_view_count not available"
+        )
+
     # ── Ranking: Most Viewed ──────────────────────────────────────────────────
     viewed_cursor = db.content.find(type_filter).sort(view_sort, -1).limit(5)
     viewed_items = []
     pos = 1
     async for doc in viewed_cursor:
-        card = doc_to_card(doc)
         viewed_items.append(RankingItem(
             position=pos,
             content=doc_to_card(doc),
-            value=format_view_count(val),
+            value=format_view_count(doc.get(view_sort, 0)),
         ))
         pos += 1
 
@@ -96,11 +117,10 @@ async def get_home(
     rated_items = []
     pos = 1
     async for doc in rated_cursor:
-        card = doc_to_card(doc)
         rated_items.append(RankingItem(
             position=pos,
             content=doc_to_card(doc),
-            value=f"{val:.1f}",
+            value=f"{doc.get(score_sort, 0.0):.1f}",
         ))
         pos += 1
 
