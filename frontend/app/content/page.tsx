@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Clapperboard, Search, Star, AlertCircle } from "lucide-react";
 import { api, ApiError, type ContentItem, type ContentFilter } from "@/lib/api";
 
@@ -198,11 +199,16 @@ const TYPE_OPTIONS: { value: ContentFilter | "all"; label: string }[] = [
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ContentPage() {
+  const router = useRouter();
+  const params = useSearchParams();
+  const initialQ = params.get("q") ?? "";
+
   const [items, setItems] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<string>("all");
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(initialQ);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -278,7 +284,15 @@ export default function ContentPage() {
             placeholder="Buscar título, gênero ou plataforma…"
             data-cy="catalog-search"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value;
+              setSearch(val);
+              if (debounceRef.current) clearTimeout(debounceRef.current);
+              debounceRef.current = setTimeout(() => {
+                const qs = val.trim() ? `?q=${encodeURIComponent(val.trim())}` : "";
+                router.replace(`/content${qs}`, { scroll: false });
+              }, 350);
+            }}
             style={{ marginBottom: 0, paddingLeft: "2.2rem" }}
           />
         </div>
@@ -328,9 +342,13 @@ export default function ContentPage() {
 
       {/* Empty */}
       {!loading && !error && filtered.length === 0 && (
-        <div className="empty">
+        <div className="empty" data-cy="catalog-empty">
           <Clapperboard size={28} />
-          <p>Nenhuma obra encontrada.</p>
+          <p>
+            {search.trim()
+              ? `Nenhuma obra encontrada para "${search.trim()}".`
+              : "Nenhuma obra encontrada."}
+          </p>
         </div>
       )}
 
