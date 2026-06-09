@@ -9,7 +9,7 @@ Feature: Landing Page (Feed)
   Scenario: Viewing trending works (Em Alta)
     When I look at the "Em Alta" section
     Then I should see a list of currently trending works, such as "Dune: Part Two" and "Shōgun"
-    And the works should be ordered strictly by their total view count
+    And the works should be ordered strictly by their recent 30-day view count
 
   Scenario: Viewing top-rated reviews (Mais bem avaliados)
     When I look at the "Mais bem avaliados da semana" section

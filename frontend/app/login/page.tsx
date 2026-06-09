@@ -21,7 +21,7 @@ export default function LoginPage() {
     try {
       const res = await api.login(username, password);
       setSession({ token: res.access_token, role: res.role, username: res.username });
-      router.replace("/dashboard");
+      router.replace("/home");
     } catch (err) {
       const msg = err instanceof ApiError ? translateError(err.message) : "Não foi possível conectar ao servidor";
       setError(msg);

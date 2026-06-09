@@ -19,7 +19,7 @@ import { formatRole } from "@/lib/copy";
 // translated text shown to the user. They are kept separate on purpose so
 // translating a label never changes a test selector.
 const NAV = [
-  { href: "/dashboard", cy: "dashboard", label: "Visão geral", Icon: LayoutDashboard },
+  { href: "/home", cy: "dashboard", label: "Visão geral", Icon: LayoutDashboard },
   { href: "/users", cy: "users", label: "Usuários", Icon: Users },
   { href: "/artists", cy: "catalog", label: "Catálogo", Icon: Library },
   { href: "/news", cy: "news", label: "Notícias", Icon: Newspaper },

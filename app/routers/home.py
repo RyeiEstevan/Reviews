@@ -1,11 +1,13 @@
+import logging
 from fastapi import APIRouter, Query
 from typing import Literal
 from datetime import datetime, timedelta
 
 from app.db.database import get_database
-from app.schemas.home import HomeResponse, MediaCard, RankingBlock, RankingItem, MediaCard
+from app.schemas.home import HomeResponse, MediaCard, RankingBlock, RankingItem
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 def doc_to_card(doc: dict) -> MediaCard:
