@@ -1,64 +1,61 @@
 /**
  * frontend/cypress/e2e/content.cy.ts
  *
- * E2E tests for the Content / Media feature.
- *
- * Preconditions:
- *   - Backend running at CYPRESS_BACKEND_URL (default http://localhost:8000)
- *   - Frontend running at baseUrl (default http://localhost:3000)
- *   - Cypress env vars:
- *       CYPRESS_MODERADOR_TOKEN  — valid JWT for a moderador user
- *       CYPRESS_COMMON_TOKEN     — valid JWT for a usuario_comum user
+ * E2E tests for the Content feature.
+ * Auth is obtained at runtime via RootAdmin login — no env-var tokens required.
  */
 
-const BASE = Cypress.env("BACKEND_URL") ?? "http://localhost:8000";
-const MODERADOR_TOKEN = Cypress.env("MODERADOR_TOKEN") ?? "";
+const API = Cypress.env("apiUrl") ?? "http://localhost:8000";
 
-function authHeader(token: string) {
-  return { Authorization: `Bearer ${token}` };
+// ── Auth helpers ──────────────────────────────────────────────────────────────
+
+function adminHeaders() {
+  return cy
+    .request("POST", `${API}/auth/login`, { username: "RootAdmin", password: "rootpass" })
+    .then((res) => ({ Authorization: `Bearer ${res.body.access_token}` as string }));
 }
 
 // ── Seed / cleanup helpers ────────────────────────────────────────────────────
 
-function createMedia(
-  token: string,
+function createContent(
+  headers: object,
   payload: { title: string; type?: string; year?: number; genre?: string[] }
 ) {
   return cy.request({
     method: "POST",
-    url: `${BASE}/media`,
-    headers: authHeader(token),
+    url: `${API}/content`,
+    headers,
     body: { type: "movie", year: 2000, genre: [], ...payload },
     failOnStatusCode: false,
   });
 }
 
-function deleteMedia(token: string, id: string) {
+function deleteContent(headers: object, id: string) {
   return cy.request({
     method: "DELETE",
-    url: `${BASE}/media/${id}`,
-    headers: authHeader(token),
+    url: `${API}/content/${id}`,
+    headers,
     failOnStatusCode: false,
   });
 }
 
-function deleteAllMedia(token: string) {
-  cy.request({ url: `${BASE}/media`, failOnStatusCode: false }).then((res) => {
+function deleteAllContent(headers: object) {
+  cy.request({ url: `${API}/content`, failOnStatusCode: false }).then((res) => {
     if (res.status === 200 && Array.isArray(res.body)) {
-      res.body.forEach((item: { id: string }) => deleteMedia(token, item.id));
+      res.body.forEach((item: { id: string }) => deleteContent(headers, item.id));
     }
   });
-}
-
-function loginAs(token: string) {
-  cy.window().then((win) => win.localStorage.setItem("token", token));
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe("Catálogo público (/content)", () => {
+  before(() => {
+    adminHeaders().then((headers) => deleteAllContent(headers));
+  });
+
   beforeEach(() => {
-    deleteAllMedia(MODERADOR_TOKEN);
+    adminHeaders().then((headers) => deleteAllContent(headers));
   });
 
   it("exibe grade vazia quando não há mídias", () => {
@@ -69,8 +66,10 @@ describe("Catálogo público (/content)", () => {
   });
 
   it("lista as mídias cadastradas", () => {
-    createMedia(MODERADOR_TOKEN, { title: "Matrix", type: "movie", year: 1999 });
-    createMedia(MODERADOR_TOKEN, { title: "Fundação", type: "series", year: 2021 });
+    adminHeaders().then((headers) => {
+      createContent(headers, { title: "Matrix", type: "movie", year: 1999 });
+      createContent(headers, { title: "Fundação", type: "series", year: 2021 });
+    });
 
     cy.visit("/content");
     cy.get('[data-cy="catalog-grid"]').should("exist");
@@ -79,51 +78,55 @@ describe("Catálogo público (/content)", () => {
   });
 
   it("filtra mídias por tipo", () => {
-    createMedia(MODERADOR_TOKEN, { title: "Matrix", type: "movie", year: 1999 });
-    createMedia(MODERADOR_TOKEN, { title: "Fundação", type: "series", year: 2021 });
+    adminHeaders().then((headers) => {
+      createContent(headers, { title: "Matrix", type: "movie", year: 1999 });
+      createContent(headers, { title: "Fundação", type: "series", year: 2021 });
+    });
 
     cy.visit("/content");
     cy.get('[data-cy="catalog-filter-movie"]').click();
-
     cy.get('[data-cy="catalog-grid"]').contains("Matrix").should("be.visible");
     cy.get('[data-cy="catalog-grid"]').contains("Fundação").should("not.exist");
   });
 
   it("busca mídias pelo título", () => {
-    createMedia(MODERADOR_TOKEN, { title: "Matrix", type: "movie", year: 1999 });
-    createMedia(MODERADOR_TOKEN, { title: "Duna", type: "movie", year: 2021 });
+    adminHeaders().then((headers) => {
+      createContent(headers, { title: "Matrix", type: "movie", year: 1999 });
+      createContent(headers, { title: "Duna", type: "movie", year: 2021 });
+    });
 
     cy.visit("/content");
     cy.get('[data-cy="catalog-search"]').type("duna");
-
     cy.contains("Duna").should("be.visible");
     cy.contains("Matrix").should("not.exist");
   });
 
   it("navega para a página de detalhe ao clicar em um card", () => {
-    createMedia(MODERADOR_TOKEN, { title: "Matrix", type: "movie", year: 1999 }).then(
-      (res) => {
+    adminHeaders().then((headers) => {
+      createContent(headers, { title: "Matrix", type: "movie", year: 1999 }).then((res) => {
         cy.visit("/content");
         cy.contains("Matrix").click();
         cy.url().should("include", `/content/${res.body.id}`);
         cy.contains("Matrix").should("be.visible");
-      }
-    );
+      });
+    });
   });
 });
 
 describe("Página de detalhe (/content/:id)", () => {
   it("exibe metadados da mídia", () => {
-    createMedia(MODERADOR_TOKEN, {
-      title: "Matrix",
-      type: "movie",
-      year: 1999,
-      genre: ["sci-fi", "action"],
-    }).then((res) => {
-      cy.visit(`/content/${res.body.id}`);
-      cy.contains("Matrix").should("be.visible");
-      cy.contains("Filme").should("be.visible");
-      cy.contains("1999").should("be.visible");
+    adminHeaders().then((headers) => {
+      createContent(headers, {
+        title: "Matrix",
+        type: "movie",
+        year: 1999,
+        genre: ["sci-fi", "action"],
+      }).then((res) => {
+        cy.visit(`/content/${res.body.id}`);
+        cy.contains("Matrix").should("be.visible");
+        cy.contains("Filme").should("be.visible");
+        cy.contains("1999").should("be.visible");
+      });
     });
   });
 
@@ -134,14 +137,31 @@ describe("Página de detalhe (/content/:id)", () => {
 });
 
 describe("Painel admin — gerenciar conteúdo (/content-manage)", () => {
-  beforeEach(() => {
-    deleteAllMedia(MODERADOR_TOKEN);
+  let session: { token: string; role: string; username: string };
+
+  before(() => {
+    cy.request("POST", `${API}/auth/login`, { username: "RootAdmin", password: "rootpass" })
+      .then((res) => {
+        session = { token: res.body.access_token, role: res.body.role, username: res.body.username };
+      });
   });
 
+  beforeEach(() => {
+    adminHeaders().then((headers) => deleteAllContent(headers));
+  });
+
+  function visitAsAdmin() {
+    cy.visit("/content-manage", {
+      onBeforeLoad(win) {
+        win.localStorage.setItem("reviews_token", session.token);
+        win.localStorage.setItem("reviews_role", session.role);
+        win.localStorage.setItem("reviews_username", session.username);
+      },
+    });
+  }
+
   it("cadastra nova mídia com sucesso", () => {
-    cy.visit("/content-manage");
-    loginAs(MODERADOR_TOKEN);
-    cy.reload();
+    visitAsAdmin();
 
     cy.get('[data-cy="content-create-btn"]').click();
     cy.get('[data-cy="content-title"]').type("Fallout");
@@ -155,11 +175,9 @@ describe("Painel admin — gerenciar conteúdo (/content-manage)", () => {
   });
 
   it("edita o título de uma mídia existente", () => {
-    createMedia(MODERADOR_TOKEN, { title: "Matrix", type: "movie", year: 1999 }).then(
-      (res) => {
-        cy.visit("/content-manage");
-        loginAs(MODERADOR_TOKEN);
-        cy.reload();
+    adminHeaders().then((headers) => {
+      createContent(headers, { title: "Matrix", type: "movie", year: 1999 }).then((res) => {
+        visitAsAdmin();
 
         cy.get(`[data-cy="content-edit-${res.body.id}"]`).click();
         cy.get('[data-cy="content-edit-modal"]').should("be.visible");
@@ -168,16 +186,14 @@ describe("Painel admin — gerenciar conteúdo (/content-manage)", () => {
 
         cy.get('[data-cy="content-success"]').should("contain", "Matrix Reloaded");
         cy.get('[data-cy="content-table"]').contains("Matrix Reloaded").should("exist");
-      }
-    );
+      });
+    });
   });
 
   it("remove uma mídia existente", () => {
-    createMedia(MODERADOR_TOKEN, { title: "Matrix", type: "movie", year: 1999 }).then(
-      (res) => {
-        cy.visit("/content-manage");
-        loginAs(MODERADOR_TOKEN);
-        cy.reload();
+    adminHeaders().then((headers) => {
+      createContent(headers, { title: "Matrix", type: "movie", year: 1999 }).then((res) => {
+        visitAsAdmin();
 
         cy.get(`[data-cy="content-delete-${res.body.id}"]`).click();
         cy.get('[data-cy="content-delete-modal"]').should("be.visible");
@@ -185,26 +201,40 @@ describe("Painel admin — gerenciar conteúdo (/content-manage)", () => {
 
         cy.get('[data-cy="content-success"]').should("contain", "Matrix");
         cy.get('[data-cy="content-table"]').contains("Matrix").should("not.exist");
-      }
-    );
+      });
+    });
   });
 
   it("exibe lista vazia quando não há mídias", () => {
-    cy.visit("/content-manage");
-    loginAs(MODERADOR_TOKEN);
-    cy.reload();
-
+    visitAsAdmin();
     cy.get('[data-cy="content-table"]').contains("Nenhuma obra encontrada").should("be.visible");
   });
 });
 
-describe("Controle de permissões — /media API", () => {
-  it("bloqueia criação de mídia por usuario_comum (403)", () => {
-    const COMMON_TOKEN = Cypress.env("COMMON_TOKEN") ?? "";
+describe("Controle de permissões — /content API", () => {
+  let commonHeaders: { Authorization: string };
+
+  before(() => {
+    // Create a temporary common user for permission tests
+    const testUser = `perm_test_${Date.now()}`;
+    adminHeaders().then((headers) => {
+      cy.request({
+        method: "POST",
+        url: `${API}/admin/users`,
+        headers,
+        body: { username: testUser, password: "pass123", role: "usuario_comum" },
+        failOnStatusCode: false,
+      });
+    });
+    cy.request("POST", `${API}/auth/login`, { username: testUser, password: "pass123" })
+      .then((res) => { commonHeaders = { Authorization: `Bearer ${res.body.access_token}` }; });
+  });
+
+  it("bloqueia criação de conteúdo por usuario_comum (403)", () => {
     cy.request({
       method: "POST",
-      url: `${BASE}/media`,
-      headers: authHeader(COMMON_TOKEN),
+      url: `${API}/content`,
+      headers: commonHeaders,
       body: { title: "Avatar", type: "movie", year: 2009, genre: [] },
       failOnStatusCode: false,
     }).then((res) => {
@@ -212,22 +242,22 @@ describe("Controle de permissões — /media API", () => {
     });
   });
 
-  it("bloqueia remoção de mídia por usuario_comum (403)", () => {
-    const COMMON_TOKEN = Cypress.env("COMMON_TOKEN") ?? "";
-    createMedia(MODERADOR_TOKEN, { title: "Matrix", year: 1999 }).then((res) => {
-      cy.request({
-        method: "DELETE",
-        url: `${BASE}/media/${res.body.id}`,
-        headers: authHeader(COMMON_TOKEN),
-        failOnStatusCode: false,
-      }).then((deleteRes) => {
-        expect(deleteRes.status).to.equal(403);
-      });
+  it("bloqueia remoção de conteúdo por usuario_comum (403)", () => {
+    adminHeaders().then((headers) => {
+      createContent(headers, { title: "Matrix", year: 1999 }).then((res) => {
+        cy.request({
+          method: "DELETE",
+          url: `${API}/content/${res.body.id}`,
+          headers: commonHeaders,
+          failOnStatusCode: false,
+        }).then((deleteRes) => {
+          expect(deleteRes.status).to.equal(403);
+        });
 
-      // Item must still exist
-      cy.request(`${BASE}/media/${res.body.id}`).then((getRes) => {
-        expect(getRes.status).to.equal(200);
-        expect(getRes.body.title).to.equal("Matrix");
+        cy.request(`${API}/content/${res.body.id}`).then((getRes) => {
+          expect(getRes.status).to.equal(200);
+          expect(getRes.body.title).to.equal("Matrix");
+        });
       });
     });
   });

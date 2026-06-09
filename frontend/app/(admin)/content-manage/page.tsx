@@ -148,7 +148,7 @@ export default function ContentManagePage() {
     };
     try {
       await api.updateContent(toEdit.id, payload);
-      flash(`"${toEdit.title}" atualizado.`);
+      flash(`"${editForm.title ?? toEdit.title}" atualizado.`);
       setToEdit(null);
       await load();
     } catch (err) { fail(err); } finally { setEditing(false); }
