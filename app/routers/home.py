@@ -12,10 +12,10 @@ logger = logging.getLogger(__name__)
 
 def doc_to_card(doc: dict) -> MediaCard:
     return MediaCard(
-        id=str(doc["_id"]),
-        title=doc["title"],
-        type=doc["type"],
-        year=doc["year"],
+        id=str(doc.get("_id", "")),
+        title=doc.get("title", ""),
+        type=doc.get("type", "movie"),
+        year=doc.get("year", 2000), 
         poster_url=doc.get("poster_url"),
         avg_score=doc.get("avg_score", 0.0),
         review_count=doc.get("review_count", 0),
