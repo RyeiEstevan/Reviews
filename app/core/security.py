@@ -42,6 +42,24 @@ def get_current_user(
     return {"username": payload.get("sub"), "role": payload.get("role")}
 
 
+def get_optional_user(
+    creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer),
+) -> Optional[dict]:
+    """Like :func:`get_current_user` but never raises: returns ``None`` for an
+    absent or invalid token. Used by public reads that still want to personalise
+    the response when a token happens to be present (e.g. "did I upvote this?").
+    """
+    if creds is None:
+        return None
+    try:
+        payload = jwt.decode(
+            creds.credentials, settings.jwt_secret, algorithms=[settings.jwt_algorithm]
+        )
+    except JWTError:
+        return None
+    return {"username": payload.get("sub"), "role": payload.get("role")}
+
+
 def require_admin(user: dict = Depends(get_current_user)) -> dict:
     """Base /admin guard: only admin or superadmin may pass."""
     if user.get("role") not in ("admin", "superadmin"):
