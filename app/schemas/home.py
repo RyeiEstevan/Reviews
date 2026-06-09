@@ -22,8 +22,3 @@ class HomeResponse(BaseModel):
     rankings: List[RankingBlock]
 
 
-class SearchResponse(BaseModel):
-    """Search results for content."""
-    query: str
-    results: List[ContentCard]
-    count: int

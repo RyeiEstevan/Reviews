@@ -5,23 +5,11 @@ from datetime import datetime, timedelta
 
 from app.db.database import get_database
 from app.schemas.home import HomeResponse, RankingBlock, RankingItem
-from app.schemas.content import ContentCard
+from app.schemas.content import doc_to_card
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-
-def doc_to_card(doc: dict) -> ContentCard:
-    return ContentCard(
-        id=str(doc.get("_id", "")),
-        title=doc.get("title", ""),
-        type=doc.get("type") if doc.get("type") in ("movie", "series", "book") else "movie",
-        year=doc.get("year", 0),
-        poster_url=doc.get("poster_url"),
-        avg_score=doc.get("avg_score", 0.0),
-        review_count=doc.get("review_count", 0),
-        platform=doc.get("platform"),
-    )
 
 
 def format_view_count(n: int) -> str:

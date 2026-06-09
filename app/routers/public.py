@@ -2,23 +2,9 @@ from fastapi import APIRouter, Query
 
 from app.db.database import get_database
 from app.db.models import News, Post
-from app.schemas.content import ContentCard
-from app.schemas.home import SearchResponse
+from app.schemas.content import SearchResponse, doc_to_card
 
 router = APIRouter(tags=["public"])
-
-
-def doc_to_card(doc: dict) -> ContentCard:
-    return ContentCard(
-        id=str(doc["_id"]),
-        title=doc["title"],
-        type=doc.get("type") if doc.get("type") in ("movie", "series", "book") else "movie",
-        year=doc.get("year", 2000),
-        poster_url=doc.get("poster_url"),
-        avg_score=doc.get("avg_score", 0.0),
-        review_count=doc.get("review_count", 0),
-        platform=doc.get("platform"),
-    )
 
 
 @router.get("/posts")
