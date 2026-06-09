@@ -1,4 +1,5 @@
 import "./globals.css";
+import "./content/content.css";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Fraunces, Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
