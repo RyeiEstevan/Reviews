@@ -57,6 +57,23 @@ export type LoginResponse = {
   role: string;
   username: string;
 };
+export type ForumPost = {
+  id: string;
+  owner: string;
+  title: string;
+  content: string;
+  category: string | null;
+  created_at: string;
+};
+export type ForumComment = {
+  id: string;
+  author: string;
+  content: string;
+  post_id: string | null;
+  upvotes: number;
+  upvoted_by_me: boolean;
+  created_at: string;
+};
 
 export const api = {
   login: (username: string, password: string) =>
@@ -119,6 +136,35 @@ export const api = {
     const qs = new URLSearchParams({ period, media_type });
     return request<HomeResponse>(`/home?${qs}`);
   },
+
+  // --- Fórum ---
+  // Reads are public; create/delete send the Bearer token (handled in `request`).
+  listForumPosts: (category = "") => {
+    const qs = category ? `?category=${encodeURIComponent(category)}` : "";
+    return request<{ data: ForumPost[] }>(`/forum/posts${qs}`).then((r) => r.data);
+  },
+  getForumPost: (id: string) =>
+    request<{ data: ForumPost }>(`/forum/posts/${id}`).then((r) => r.data),
+  createForumPost: (p: { title: string; content: string; category: string }) =>
+    request<{ data: ForumPost }>("/forum/posts", {
+      method: "POST",
+      body: JSON.stringify(p),
+    }).then((r) => r.data),
+  deleteForumPost: (id: string) =>
+    request<{ data: { deleted: boolean } }>(`/forum/posts/${id}`, { method: "DELETE" }),
+  listForumComments: (postId: string) =>
+    request<{ data: ForumComment[] }>(`/forum/posts/${postId}/comments`).then((r) => r.data),
+  createForumComment: (postId: string, content: string) =>
+    request<{ data: ForumComment }>(`/forum/posts/${postId}/comments`, {
+      method: "POST",
+      body: JSON.stringify({ content }),
+    }).then((r) => r.data),
+  deleteForumComment: (commentId: string) =>
+    request<{ data: { deleted: boolean } }>(`/forum/comments/${commentId}`, { method: "DELETE" }),
+  toggleCommentUpvote: (commentId: string) =>
+    request<{ data: ForumComment }>(`/forum/comments/${commentId}/upvote`, {
+      method: "POST",
+    }).then((r) => r.data),
 };
 
 // ─── Home / Feed types ─────────────────────────────────────────────────────
