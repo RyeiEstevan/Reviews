@@ -49,6 +49,16 @@ const ERROR_LABELS: Record<string, string> = {
   "username already exists": "este usuário já existe",
   "user not found": "usuário não encontrado",
   "name is required": "o nome é obrigatório",
+  // Fórum
+  "title is required": "o título é obrigatório",
+  "comment cannot be empty": "o comentário não pode estar vazio",
+  "invalid category": "categoria inválida",
+  "post not found": "post não encontrado",
+  "comment not found": "comentário não encontrado",
+  "not allowed to delete this post": "você não tem permissão para excluir este post",
+  "not allowed to delete this comment": "você não tem permissão para excluir este comentário",
+  "post content too long": "o conteúdo do post deve ter no máximo 100 caracteres",
+  "comment too long": "o comentário deve ter no máximo 100 caracteres",
 };
 
 export const formatRole = (role: string): string => ROLE_LABELS[role] ?? role;

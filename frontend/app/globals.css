@@ -1011,3 +1011,124 @@ article.card h3 {
     scroll-behavior: auto !important;
   }
 }
+
+/* =============================== fórum ================================= */
+/* Forum is the public/community face — reuses .public-wrap, article.card,
+   .tag, .empty and .modal from the editorial system; only a few layout
+   helpers are forum-specific. */
+.forum-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 1.1rem;
+  margin-bottom: 1.6rem;
+  border-bottom: 1px solid var(--border);
+}
+.forum-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1.05rem;
+}
+
+/* category filter chips (interactive, unlike the static .tag) */
+.cat-filter {
+  display: inline-flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.cat-chip {
+  padding: 0.34rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text-soft);
+  font-size: 0.83rem;
+  font-weight: 500;
+  box-shadow: none;
+}
+.cat-chip:hover:not(:disabled) {
+  background: var(--panel-3);
+  border-color: var(--border-strong);
+  color: var(--text);
+  filter: none;
+}
+.cat-chip.active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent-2);
+}
+
+/* post + comment meta */
+.post-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  font-size: 0.78rem;
+  color: var(--faint);
+  margin-bottom: 0.5rem;
+}
+.comment {
+  border-top: 1px solid var(--border);
+  padding: 0.9rem 0;
+}
+.comment:first-of-type {
+  border-top: none;
+}
+.comment-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.25rem;
+}
+.comment-author {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+/* comment upvote toggle (reuses the accent system; mirrors .cat-chip states) */
+.upvote {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text-soft);
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1;
+  box-shadow: none;
+  cursor: pointer;
+}
+.upvote:hover:not(:disabled) {
+  background: var(--panel-3);
+  border-color: var(--border-strong);
+  color: var(--text);
+  filter: none;
+}
+.upvote.active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent-2);
+}
+.upvote:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* live character counter under post/comment fields */
+.char-count {
+  margin-top: 0.3rem;
+  text-align: right;
+  font-size: 0.75rem;
+  color: var(--faint);
+}
+.char-count.limit {
+  color: var(--danger);
+  font-weight: 600;
+}

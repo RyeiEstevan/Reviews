@@ -1,9 +1,9 @@
 import { getToken } from "./auth";
-
+ 
 // Single typed gateway to the FastAPI backend. Every call injects the Bearer token
 // (when present) and unwraps the `{ data: ... }` envelope the API returns.
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-
+ 
 export class ApiError extends Error {
   status: number;
   constructor(status: number, message: string) {
@@ -12,7 +12,7 @@ export class ApiError extends Error {
     this.name = "ApiError";
   }
 }
-
+ 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getToken();
   const headers: Record<string, string> = {
@@ -20,20 +20,20 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     ...(options.headers as Record<string, string>),
   };
   if (token) headers["Authorization"] = `Bearer ${token}`;
-
+ 
   const res = await fetch(`${API_URL}${path}`, { ...options, headers });
   const text = await res.text();
   const body = text ? JSON.parse(text) : null;
-
+ 
   if (!res.ok) {
     const detail = (body && (body.detail ?? body.message)) ?? `request failed (${res.status})`;
     throw new ApiError(res.status, typeof detail === "string" ? detail : JSON.stringify(detail));
   }
   return body as T;
 }
-
+ 
 // ── Types ────────────────────────────────────────────────────────────────────
-
+ 
 export type User = {
   id: string;
   username: string;
@@ -42,11 +42,11 @@ export type User = {
   status: string;
   ban_reason: string | null;
 };
-
+ 
 export type Contributor = { id: string; name: string; role: string };
-
+ 
 export type News = { id: string; title: string; body?: string; tags: string[] };
-
+ 
 export type AuditEntry = {
   id: string;
   actor: string;
@@ -56,16 +56,16 @@ export type AuditEntry = {
   metadata: Record<string, unknown>;
   created_at: string;
 };
-
+ 
 export type LoginResponse = {
   access_token: string;
   token_type: string;
   role: string;
   username: string;
 };
-
+ 
 // ─── Content (full document from the `content` collection) ─────────────────
-
+ 
 export interface ContentItem {
   id: string;
   title: string;
@@ -84,7 +84,7 @@ export interface ContentItem {
   yearly_avg_score: number;
   yearly_view_count: number;
 }
-
+ 
 export interface ContentCreatePayload {
   title: string;
   type: "movie" | "series" | "book";
@@ -95,7 +95,7 @@ export interface ContentCreatePayload {
   director?: string | null;
   platform?: string | null;
 }
-
+ 
 export interface ContentUpdatePayload {
   title?: string;
   type?: "movie" | "series" | "book";
@@ -106,11 +106,11 @@ export interface ContentUpdatePayload {
   director?: string | null;
   platform?: string | null;
 }
-
+ 
 // ─── Home / Feed types ─────────────────────────────────────────────────────
-
+ 
 export type ContentType = "movie" | "series" | "book";
-
+ 
 export type ContentCard = {
   id: string;
   title: string;
@@ -121,38 +121,56 @@ export type ContentCard = {
   review_count: number;
   platform: string | null;
 };
-
+ 
 export type RankingItem = {
   position: number;
   content: ContentCard;
   value: string;
 };
-
+ 
 export type RankingBlock = {
   title: string;
   badge: string;
   items: RankingItem[];
 };
-
+ 
 export type HomeResponse = {
   trending: ContentCard[];
   top_rated: ContentCard[];
   rankings: RankingBlock[];
 };
-
+ 
 export type Period = "month" | "year" | "all";
 export type ContentFilter = "all" | "movie" | "series" | "book";
-
-
+ 
+ 
 // ── API Object ──────────────────────────────────────────────────────────────
-
+ 
+export type ForumPost = {
+  id: string;
+  owner: string;
+  title: string;
+  content: string;
+  category: string | null;
+  created_at: string;
+};
+export type ForumComment = {
+  id: string;
+  author: string;
+  content: string;
+  post_id: string | null;
+  upvotes: number;
+  upvoted_by_me: boolean;
+  created_at: string;
+};
+ 
 export const api = {
   login: (username: string, password: string) =>
     request<LoginResponse>("/auth/login", {
       method: "POST",
       body: JSON.stringify({ username, password }),
     }),
-
+ 
   listUsers: () => request<{ data: User[] }>("/admin/users").then((r) => r.data),
   
   createUser: (u: { username: string; email?: string; password: string; role: string }) =>
@@ -177,7 +195,7 @@ export const api = {
     
   unbanUser: (id: string) =>
     request<{ data: User }>(`/admin/users/${id}/unban`, { method: "POST" }).then((r) => r.data),
-
+ 
   listArtists: (q = "") =>
     request<{ data: Contributor[] }>(`/admin/artists?q=${encodeURIComponent(q)}`).then(
       (r) => r.data,
@@ -188,12 +206,12 @@ export const api = {
       method: "POST",
       body: JSON.stringify(c),
     }).then((r) => r.data),
-
+ 
   createNews: (n: { title: string; body: string; tags: string[] }) =>
     request<{ data: News }>("/admin/news", { method: "POST", body: JSON.stringify(n) }).then(
       (r) => r.data,
     ),
-
+ 
   auditLog: (filters: { actor?: string; action?: string } = {}) => {
     const p = new URLSearchParams();
     if (filters.actor) p.set("actor", filters.actor);
@@ -203,15 +221,15 @@ export const api = {
       (r) => r.data,
     );
   },
-
+ 
   publicNews: () => request<{ data: News[] }>("/news").then((r) => r.data),
-
+ 
   // ─── Home / public feed ────────────────────────────────────────────────
   home: (period: Period = "month", media_type: ContentFilter = "all") => {
     const qs = new URLSearchParams({ period, media_type });
     return request<HomeResponse>(`/home?${qs}`);
   },
-
+ 
   // ─── Content (db.content collection) ────────────────────────────────────────
   listContent: (params?: { type?: string; q?: string }) => {
     const qs = new URLSearchParams();
@@ -220,16 +238,45 @@ export const api = {
     const query = qs.toString();
     return request<ContentItem[]>(`/content${query ? `?${query}` : ""}`);
   },
-
+ 
   getContent: (id: string) => request<ContentItem>(`/content/${id}`),
-
+ 
   createContent: (payload: ContentCreatePayload) =>
     request<ContentItem>("/content", { method: "POST", body: JSON.stringify(payload) }),
-
+ 
   updateContent: (id: string, payload: ContentUpdatePayload) =>
     request<ContentItem>(`/content/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
-
+ 
   deleteContent: (id: string) =>
     request<void>(`/content/${id}`, { method: "DELETE" }),
-
+ 
+  // --- Fórum ---
+  // Reads are public; create/delete send the Bearer token (handled in `request`).
+  listForumPosts: (category = "") => {
+    const qs = category ? `?category=${encodeURIComponent(category)}` : "";
+    return request<{ data: ForumPost[] }>(`/forum/posts${qs}`).then((r) => r.data);
+  },
+  getForumPost: (id: string) =>
+    request<{ data: ForumPost }>(`/forum/posts/${id}`).then((r) => r.data),
+  createForumPost: (p: { title: string; content: string; category: string }) =>
+    request<{ data: ForumPost }>("/forum/posts", {
+      method: "POST",
+      body: JSON.stringify(p),
+    }).then((r) => r.data),
+  deleteForumPost: (id: string) =>
+    request<{ data: { deleted: boolean } }>(`/forum/posts/${id}`, { method: "DELETE" }),
+  listForumComments: (postId: string) =>
+    request<{ data: ForumComment[] }>(`/forum/posts/${postId}/comments`).then((r) => r.data),
+  createForumComment: (postId: string, content: string) =>
+    request<{ data: ForumComment }>(`/forum/posts/${postId}/comments`, {
+      method: "POST",
+      body: JSON.stringify({ content }),
+    }).then((r) => r.data),
+  deleteForumComment: (commentId: string) =>
+    request<{ data: { deleted: boolean } }>(`/forum/comments/${commentId}`, { method: "DELETE" }),
+  toggleCommentUpvote: (commentId: string) =>
+    request<{ data: ForumComment }>(`/forum/comments/${commentId}/upvote`, {
+      method: "POST",
+    }).then((r) => r.data),
+ 
 };
