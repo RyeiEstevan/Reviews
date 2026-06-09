@@ -69,7 +69,10 @@ def i_am_on_landing_page(client, context, run, db):
                     "type": "series",
                     "view_count": 8_000,
                     "recent_view_count": 800,
+                    "yearly_view_count": 5_000,
                     "avg_score": 9.4,
+                    "recent_avg_score": 9.4,
+                    "yearly_avg_score": 9.4,
                     "review_count": 200,         # above quorum
                     "year": 2024,
                     "created_at": now,
@@ -79,7 +82,10 @@ def i_am_on_landing_page(client, context, run, db):
                     "type": "movie",
                     "view_count": 15_000,
                     "recent_view_count": 1500,
+                    "yearly_view_count": 10_000,
                     "avg_score": 8.9,
+                    "recent_avg_score": 8.9,
+                    "yearly_avg_score": 8.9,
                     "review_count": 500,         # above quorum
                     "year": 2024,
                     "created_at": now,
@@ -89,7 +95,10 @@ def i_am_on_landing_page(client, context, run, db):
                     "type": "series",
                     "view_count": 12_000,
                     "recent_view_count": 1200,
+                    "yearly_view_count": 8_000,
                     "avg_score": 8.5,
+                    "recent_avg_score": 8.5,
+                    "yearly_avg_score": 8.5,
                     "review_count": 300,         # above quorum
                     "year": 2024,
                     "created_at": now,
@@ -123,7 +132,7 @@ def see_trending_works(context):
     assert has_shogun, f"Expected 'Shōgun'/'Shogun' in trending, got: {titles}"
 
 
-@then("the works should be ordered strictly by their total view count")
+@then("the works should be ordered strictly by their recent 30-day view count")
 def check_trending_order(context, run, db):
     """The /home default (period=month) sorts by recent_view_count, which mirrors
     total view_count for our seed data (all items created 'now').  We validate

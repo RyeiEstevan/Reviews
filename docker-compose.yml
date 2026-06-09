@@ -13,6 +13,20 @@ services:
       - ./pytest.ini:/app/pytest.ini
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
+  frontend:
+    build: ./frontend
+    container_name: reviews_frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - api
+
   # Real MongoDB for integration/regex/latency tests (PLAN §1.2). Start with: docker compose --profile test up -d mongo-test
   mongo-test:
     image: mongo:7
