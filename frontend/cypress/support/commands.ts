@@ -16,6 +16,9 @@ declare global {
       loginAs(username: string, password: string): Chainable<void>;
       apiAs(token: string, method: string, path: string, body?: unknown): Chainable<Cypress.Response<{ data?: unknown; detail?: string }>>;
       seedUser(token: string, user: NewUser): Chainable<string>;
+      apiToken(username: string, password: string): Chainable<string>;
+      seedPost(token: string, post: { title: string; content?: string; category: string }): Chainable<string>;
+      seedComment(token: string, postId: string, content: string): Chainable<string>;
     }
   }
 }
@@ -55,6 +58,24 @@ Cypress.Commands.add("apiAs", (token: string, method: string, path: string, body
 Cypress.Commands.add("seedUser", (token: string, user: NewUser) =>
   cy.apiAs(token, "POST", "/admin/users", user).then((res) => {
     expect([201, 409]).to.include(res.status);
+    return (res.body?.data as { id?: string })?.id ?? "";
+  }),
+);
+
+Cypress.Commands.add("apiToken", (username: string, password: string) =>
+  cy.apiLogin(username, password).then((body) => body.access_token),
+);
+
+Cypress.Commands.add("seedPost", (token: string, post: { title: string; content?: string; category: string }) =>
+  cy.apiAs(token, "POST", "/forum/posts", { content: "", ...post }).then((res) => {
+    expect(res.status).to.eq(201);
+    return (res.body?.data as { id?: string })?.id ?? "";
+  }),
+);
+
+Cypress.Commands.add("seedComment", (token: string, postId: string, content: string) =>
+  cy.apiAs(token, "POST", `/forum/posts/${postId}/comments`, { content }).then((res) => {
+    expect(res.status).to.eq(201);
     return (res.body?.data as { id?: string })?.id ?? "";
   }),
 );
