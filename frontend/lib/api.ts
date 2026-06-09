@@ -32,6 +32,34 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   return body as T;
 }
 
+// ── Types ────────────────────────────────────────────────────────────────────
+
+export interface ContentItem {
+  id: string;
+  title: string;
+  genre: string;
+  release_year: number;
+  duration: string;
+  rating: number;
+  review_count: number;
+  view_count: number;
+  recent_view_count: number;
+}
+
+export interface ContentCreatePayload {
+  title: string;
+  genre: string;
+  release_year: number;
+  duration: string;
+}
+
+export interface ContentUpdatePayload {
+  title?: string;
+  genre?: string;
+  release_year?: number;
+  duration?: string;
+}
+
 export type User = {
   id: string;
   username: string;
@@ -40,8 +68,11 @@ export type User = {
   status: string;
   ban_reason: string | null;
 };
+
 export type Contributor = { id: string; name: string; role: string };
+
 export type News = { id: string; title: string; body?: string; tags: string[] };
+
 export type AuditEntry = {
   id: string;
   actor: string;
@@ -51,74 +82,12 @@ export type AuditEntry = {
   metadata: Record<string, unknown>;
   created_at: string;
 };
+
 export type LoginResponse = {
   access_token: string;
   token_type: string;
   role: string;
   username: string;
-};
-
-export const api = {
-  login: (username: string, password: string) =>
-    request<LoginResponse>("/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ username, password }),
-    }),
-
-  listUsers: () => request<{ data: User[] }>("/admin/users").then((r) => r.data),
-  createUser: (u: { username: string; email?: string; password: string; role: string }) =>
-    request<{ data: User }>("/admin/users", { method: "POST", body: JSON.stringify(u) }).then(
-      (r) => r.data,
-    ),
-  updateUser: (id: string, patch: { email?: string; username?: string }) =>
-    request<{ data: User }>(`/admin/users/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(patch),
-    }).then((r) => r.data),
-  deleteUser: (id: string) =>
-    request<{ data: { deleted: boolean } }>(`/admin/users/${id}`, { method: "DELETE" }),
-  banUser: (id: string, reason: string) =>
-    request<{ data: User }>(`/admin/users/${id}/ban`, {
-      method: "POST",
-      body: JSON.stringify({ reason }),
-    }).then((r) => r.data),
-  unbanUser: (id: string) =>
-    request<{ data: User }>(`/admin/users/${id}/unban`, { method: "POST" }).then((r) => r.data),
-
-  listArtists: (q = "") =>
-    request<{ data: Contributor[] }>(`/admin/artists?q=${encodeURIComponent(q)}`).then(
-      (r) => r.data,
-    ),
-  createArtist: (c: { name: string; role: string }) =>
-    request<{ data: Contributor }>("/admin/artists", {
-      method: "POST",
-      body: JSON.stringify(c),
-    }).then((r) => r.data),
-
-  createNews: (n: { title: string; body: string; tags: string[] }) =>
-    request<{ data: News }>("/admin/news", { method: "POST", body: JSON.stringify(n) }).then(
-      (r) => r.data,
-    ),
-
-  auditLog: (filters: { actor?: string; action?: string } = {}) => {
-    const p = new URLSearchParams();
-    if (filters.actor) p.set("actor", filters.actor);
-    if (filters.action) p.set("action", filters.action);
-    const qs = p.toString();
-    return request<{ data: AuditEntry[] }>(`/admin/audit-log${qs ? `?${qs}` : ""}`).then(
-      (r) => r.data,
-    );
-  },
-
-  publicNews: () => request<{ data: News[] }>("/news").then((r) => r.data),
-  publicPosts: () =>
-    request<{ data: { id: string; owner: string; title: string }[] }>("/posts").then((r) => r.data),
-
-  // ─── Home / public feed ────────────────────────────────────────────────
-  home: (period: Period = "month", media_type: MediaFilter = "all") => {
-    const qs = new URLSearchParams({ period, media_type });
-    return request<HomeResponse>(`/home?${qs}`);
-  },
 };
 
 // ─── Home / Feed types ─────────────────────────────────────────────────────
@@ -156,3 +125,99 @@ export type HomeResponse = {
 
 export type Period = "month" | "year" | "all";
 export type MediaFilter = "all" | "movie" | "series" | "book";
+
+
+// ── API Object ──────────────────────────────────────────────────────────────
+
+export const api = {
+  login: (username: string, password: string) =>
+    request<LoginResponse>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ username, password }),
+    }),
+
+  listUsers: () => request<{ data: User[] }>("/admin/users").then((r) => r.data),
+  
+  createUser: (u: { username: string; email?: string; password: string; role: string }) =>
+    request<{ data: User }>("/admin/users", { method: "POST", body: JSON.stringify(u) }).then(
+      (r) => r.data,
+    ),
+    
+  updateUser: (id: string, patch: { email?: string; username?: string }) =>
+    request<{ data: User }>(`/admin/users/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(patch),
+    }).then((r) => r.data),
+    
+  deleteUser: (id: string) =>
+    request<{ data: { deleted: boolean } }>(`/admin/users/${id}`, { method: "DELETE" }),
+    
+  banUser: (id: string, reason: string) =>
+    request<{ data: User }>(`/admin/users/${id}/ban`, {
+      method: "POST",
+      body: JSON.stringify({ reason }),
+    }).then((r) => r.data),
+    
+  unbanUser: (id: string) =>
+    request<{ data: User }>(`/admin/users/${id}/unban`, { method: "POST" }).then((r) => r.data),
+
+  listArtists: (q = "") =>
+    request<{ data: Contributor[] }>(`/admin/artists?q=${encodeURIComponent(q)}`).then(
+      (r) => r.data,
+    ),
+    
+  createArtist: (c: { name: string; role: string }) =>
+    request<{ data: Contributor }>("/admin/artists", {
+      method: "POST",
+      body: JSON.stringify(c),
+    }).then((r) => r.data),
+
+  createNews: (n: { title: string; body: string; tags: string[] }) =>
+    request<{ data: News }>("/admin/news", { method: "POST", body: JSON.stringify(n) }).then(
+      (r) => r.data,
+    ),
+
+  auditLog: (filters: { actor?: string; action?: string } = {}) => {
+    const p = new URLSearchParams();
+    if (filters.actor) p.set("actor", filters.actor);
+    if (filters.action) p.set("action", filters.action);
+    const qs = p.toString();
+    return request<{ data: AuditEntry[] }>(`/admin/audit-log${qs ? `?${qs}` : ""}`).then(
+      (r) => r.data,
+    );
+  },
+
+  publicNews: () => request<{ data: News[] }>("/news").then((r) => r.data),
+  
+  publicPosts: () =>
+    request<{ data: { id: string; owner: string; title: string }[] }>("/posts").then((r) => r.data),
+
+  // ─── Home / public feed ────────────────────────────────────────────────
+  home: (period: Period = "month", media_type: MediaFilter = "all") => {
+    const qs = new URLSearchParams({ period, media_type });
+    return request<HomeResponse>(`/home?${qs}`);
+  },
+
+  // ─── Content / Catalog ─────────────────────────────────────────────────
+  listContent: () => request<ContentItem[]>("/content"),
+  
+  getContent: (id: string) => request<ContentItem>(`/content/${id}`),
+  
+  createContent: (payload: ContentCreatePayload) =>
+    request<ContentItem>("/content", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+    
+  updateContent: (id: string, payload: ContentUpdatePayload) =>
+    request<ContentItem>(`/content/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    }),
+    
+  deleteContent: (id: string) =>
+    request<{ message: string }>(`/content/${id}`, { method: "DELETE" }),
+    
+  recordContentView: (id: string) =>
+    request<ContentItem>(`/content/${id}/view`, { method: "POST" }),
+};
