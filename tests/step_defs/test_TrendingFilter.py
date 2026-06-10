@@ -68,7 +68,7 @@ def test_top_rated_locked_to_recent_score_for_all_time_period():
 
 
 # ==========================================
-# STEPS (GIVEN) -- Audience / Quorum
+# Scenario: Audience Filtering in the Service Layer
 # ==========================================
 
 
@@ -117,8 +117,47 @@ def step_quorum_rule():
     """Semantic BDD step -- the quorum constant lives in the router (review_count >= 50)."""
 
 
+@when('the service receives a request to generate the "Top Rated" list')
+def request_top_rated(client, context):
+    buf = io.StringIO()
+    handler = logging.StreamHandler(buf)
+    handler.setLevel(logging.DEBUG)
+    home_logger = logging.getLogger("app.routers.home")
+    prev_level = home_logger.level
+    home_logger.setLevel(logging.DEBUG)
+    home_logger.addHandler(handler)
+    try:
+        context["response"] = client.get("/home")
+    finally:
+        home_logger.removeHandler(handler)
+        home_logger.setLevel(prev_level)
+    context["log_text"] = buf.getvalue()
+
+
+@then("the service processes the aggregation of ratings validating the quorum")
+def validate_quorum_processing(context):
+    assert context["response"].status_code == 200
+
+
+@then('returns a dataset that includes the work "The Godfather"')
+def check_godfather_included(context):
+    data = context["response"].json()
+    titles = [item["title"] for item in data.get("top_rated", [])]
+    assert "The Godfather" in titles, f"Expected 'The Godfather' in top_rated, got: {titles}"
+
+
+@then('completely omits the work "Short Film" from the generated response.')
+def check_short_film_omitted(context):
+    data = context["response"].json()
+    top_rated_titles = [item["title"] for item in data.get("top_rated", [])]
+    assert "Short Film" not in top_rated_titles, (
+        f"'Short Film' (review_count=5 < 50 quorum) must be absent from top_rated, "
+        f"found in: {top_rated_titles}"
+    )
+
+
 # ==========================================
-# STEPS (GIVEN) -- Temporal / Trending
+# Scenario: Temporal calculation for the "Trending" ranking
 # ==========================================
 
 
@@ -167,8 +206,36 @@ def setup_recent_release(run, db):
     )
 
 
+@when('the service receives a request to process the "Trending" ranking with period set to "month"')
+def request_trending_month(client, context):
+    context["response"] = client.get("/home?period=month")
+
+
+@then("the service performs the query filtering interactions only by the recent 30-day period")
+def validate_temporal_filtering(context):
+    assert context["response"].status_code == 200
+
+
+@then('returns the result list ranking "Recent Release" higher than "Old Classic".')
+def validate_temporal_ranking(context):
+    data = context["response"].json()
+    trending = data.get("trending", [])
+    titles = [item["title"] for item in trending]
+
+    assert "Recent Release" in titles, (
+        f"Expected 'Recent Release' in trending (period=month, recent_view_count=450), "
+        f"got: {titles}"
+    )
+
+    if "Old Classic" in titles:
+        assert titles.index("Recent Release") < titles.index("Old Classic"), (
+            "Recent Release (recent_view_count=450) must rank above "
+            "Old Classic (recent_view_count=10) when sorted by recent activity"
+        )
+
+
 # ==========================================
-# STEPS (GIVEN) -- Category segmentation
+# Scenario: Category segmentation in the Popularity ranking
 # ==========================================
 
 
@@ -212,8 +279,47 @@ def setup_national_series(run, db):
     )
 
 
+@when('the service receives a ranking request with filter set to "series"')
+def request_series_filter(client, context):
+    context["response"] = client.get("/home?media_type=series")
+
+
+@then("the service applies the category filter")
+def validate_category_filter(context):
+    assert context["response"].status_code == 200
+
+
+@then('returns the dataset with the work "National Series"')
+def validate_national_series(context):
+    data = context["response"].json()
+    all_titles = (
+        [item["title"] for item in data.get("trending", [])]
+        + [item["title"] for item in data.get("top_rated", [])]
+    )
+    assert "National Series" in all_titles, (
+        f"Expected 'National Series' (type=series) in response for media_type=series, "
+        f"got: {all_titles}"
+    )
+
+
+@then('omits the work "Global Blockbuster" from the generated response.')
+def validate_blockbuster_omitted(context):
+    data = context["response"].json()
+    all_titles = (
+        [item["title"] for item in data.get("trending", [])]
+        + [item["title"] for item in data.get("top_rated", [])]
+    )
+    assert "Global Blockbuster" not in all_titles, (
+        f"'Global Blockbuster' (type=movie) must be absent when media_type=series, "
+        f"found in: {all_titles}"
+    )
+
+
 # ==========================================
-# STEPS (GIVEN) -- Quorum failure (empty DB)
+# Scenario: Quorum failure due to insufficient volume
+#   (reuses "the service rule requires a minimum quorum..." and
+#    "the service receives a request to generate the Top Rated list"
+#    given/when steps defined above, plus the dedicated steps below)
 # ==========================================
 
 
@@ -252,8 +358,37 @@ def setup_low_quorum_db(run, db):
     )
 
 
+@then(
+    "the service processes the validation and identifies that no work reached the threshold"
+)
+def validate_threshold_failure(context):
+    assert context["response"].status_code == 200
+
+
+@then("returns an empty dataset instead of listing works with low quorum")
+def validate_empty_quorum_dataset(context):
+    data = context["response"].json()
+    top_rated = data.get("top_rated", [])
+    assert len(top_rated) == 0, (
+        f"Expected empty top_rated when all works are below quorum (review_count < 50), "
+        f"got: {top_rated}"
+    )
+
+
+@then(
+    'the system writes a "WARN: top_rated aggregation returned 0 items. '
+    'Quorum threshold not met for current period." record for monitoring.'
+)
+def validate_quorum_warn_log(context):
+    log_text = context.get("log_text", "")
+    assert "WARN: top_rated aggregation returned 0 items." in log_text, (
+        f"Expected quorum-warning log line from app.routers.home, "
+        f"captured log contained:\n{log_text}"
+    )
+
+
 # ==========================================
-# STEPS (GIVEN) -- Trending lock (period=all)
+# Scenario: All-time period does not override the trending temporal lock
 # ==========================================
 
 
@@ -300,8 +435,36 @@ def setup_viral_indie(run, db):
     )
 
 
+@when('the service processes the "Trending" ranking with period set to "all"')
+def request_trending_period_all(client, context):
+    context["response"] = client.get("/home?period=all")
+
+
+@then("the trending list is still ranked by recent 30-day view activity")
+def validate_trending_still_temporal(context):
+    """Trending always uses recent_view_count -- period=all must not change that."""
+    assert context["response"].status_code == 200
+
+
+@then('the work "Viral Indie" should rank above "1990 Box Office Hit" in the trending list')
+def check_viral_indie_above_1990_hit(context):
+    data = context["response"].json()
+    trending = data.get("trending", [])
+    titles = [item["title"] for item in trending]
+
+    assert "Viral Indie" in titles, (
+        f"Expected 'Viral Indie' (recent_view_count=1000) in trending for period=all, "
+        f"got: {titles}"
+    )
+    if "1990 Box Office Hit" in titles:
+        assert titles.index("Viral Indie") < titles.index("1990 Box Office Hit"), (
+            "Viral Indie (recent_view_count=1000) must rank above "
+            "1990 Box Office Hit (recent_view_count=0) even when period=all"
+        )
+
+
 # ==========================================
-# STEPS (GIVEN) -- Period-aware Top Rated (year vs month)
+# Scenario: Top Rated is locked to the 30-day window regardless of period
 # ==========================================
 
 
@@ -349,8 +512,30 @@ def setup_month_darling(run, db):
     )
 
 
+@when('the service receives a request with period set to "year"')
+def request_period_year(client, context):
+    context["response"] = client.get("/home?period=year")
+
+
+@then('the top_rated list ranks "Month Darling" above "Evergreen Classic"')
+def check_month_darling_above_evergreen(context):
+    data = context["response"].json()
+    titles = [item["title"] for item in data.get("top_rated", [])]
+
+    assert "Month Darling" in titles, (
+        f"Expected 'Month Darling' in top_rated, got: {titles}"
+    )
+    assert "Evergreen Classic" in titles, (
+        f"Expected 'Evergreen Classic' in top_rated, got: {titles}"
+    )
+    assert titles.index("Month Darling") < titles.index("Evergreen Classic"), (
+        "Month Darling (recent_avg_score=9.5) must rank above "
+        "Evergreen Classic (recent_avg_score=6.0) — top_rated is locked to the 30-day window"
+    )
+
+
 # ==========================================
-# STEPS (GIVEN) -- Period-aware Top Rated (all-time)
+# Scenario: Top Rated ignores global score and always ranks by recent 30-day score
 # ==========================================
 
 
@@ -398,226 +583,9 @@ def setup_recent_sensation(run, db):
     )
 
 
-# ==========================================
-# STEPS (WHEN)
-# ==========================================
-
-
-@when('the service receives a request to generate the "Top Rated" list')
-def request_top_rated(client, context):
-    buf = io.StringIO()
-    handler = logging.StreamHandler(buf)
-    handler.setLevel(logging.DEBUG)
-    home_logger = logging.getLogger("app.routers.home")
-    prev_level = home_logger.level
-    home_logger.setLevel(logging.DEBUG)
-    home_logger.addHandler(handler)
-    try:
-        context["response"] = client.get("/home")
-    finally:
-        home_logger.removeHandler(handler)
-        home_logger.setLevel(prev_level)
-    context["log_text"] = buf.getvalue()
-
-
-@when('the service receives a request to process the "Trending" ranking with period set to "month"')
-def request_trending_month(client, context):
-    context["response"] = client.get("/home?period=month")
-
-
-@when('the service receives a ranking request with filter set to "series"')
-def request_series_filter(client, context):
-    context["response"] = client.get("/home?media_type=series")
-
-
-@when('the service processes the "Trending" ranking with period set to "all"')
-def request_trending_period_all(client, context):
-    context["response"] = client.get("/home?period=all")
-
-
-@when('the service receives a request with period set to "year"')
-def request_period_year(client, context):
-    context["response"] = client.get("/home?period=year")
-
-
 @when('the service receives a request with period set to "all"')
 def request_period_all(client, context):
     context["response"] = client.get("/home?period=all")
-
-
-# ==========================================
-# STEPS (THEN) -- Quorum filtering
-# ==========================================
-
-
-@then("the service processes the aggregation of ratings validating the quorum")
-def validate_quorum_processing(context):
-    assert context["response"].status_code == 200
-
-
-@then('returns a dataset that includes the work "The Godfather"')
-def check_godfather_included(context):
-    data = context["response"].json()
-    titles = [item["title"] for item in data.get("top_rated", [])]
-    assert "The Godfather" in titles, f"Expected 'The Godfather' in top_rated, got: {titles}"
-
-
-@then('completely omits the work "Short Film" from the generated response.')
-def check_short_film_omitted(context):
-    data = context["response"].json()
-    top_rated_titles = [item["title"] for item in data.get("top_rated", [])]
-    assert "Short Film" not in top_rated_titles, (
-        f"'Short Film' (review_count=5 < 50 quorum) must be absent from top_rated, "
-        f"found in: {top_rated_titles}"
-    )
-
-
-# ==========================================
-# STEPS (THEN) -- Temporal ranking
-# ==========================================
-
-
-@then("the service performs the query filtering interactions only by the recent 30-day period")
-def validate_temporal_filtering(context):
-    assert context["response"].status_code == 200
-
-
-@then('returns the result list ranking "Recent Release" higher than "Old Classic".')
-def validate_temporal_ranking(context):
-    data = context["response"].json()
-    trending = data.get("trending", [])
-    titles = [item["title"] for item in trending]
-
-    assert "Recent Release" in titles, (
-        f"Expected 'Recent Release' in trending (period=month, recent_view_count=450), "
-        f"got: {titles}"
-    )
-
-    if "Old Classic" in titles:
-        assert titles.index("Recent Release") < titles.index("Old Classic"), (
-            "Recent Release (recent_view_count=450) must rank above "
-            "Old Classic (recent_view_count=10) when sorted by recent activity"
-        )
-
-
-# ==========================================
-# STEPS (THEN) -- Category segmentation
-# ==========================================
-
-
-@then("the service applies the category filter")
-def validate_category_filter(context):
-    assert context["response"].status_code == 200
-
-
-@then('returns the dataset with the work "National Series"')
-def validate_national_series(context):
-    data = context["response"].json()
-    all_titles = (
-        [item["title"] for item in data.get("trending", [])]
-        + [item["title"] for item in data.get("top_rated", [])]
-    )
-    assert "National Series" in all_titles, (
-        f"Expected 'National Series' (type=series) in response for media_type=series, "
-        f"got: {all_titles}"
-    )
-
-
-@then('omits the work "Global Blockbuster" from the generated response.')
-def validate_blockbuster_omitted(context):
-    data = context["response"].json()
-    all_titles = (
-        [item["title"] for item in data.get("trending", [])]
-        + [item["title"] for item in data.get("top_rated", [])]
-    )
-    assert "Global Blockbuster" not in all_titles, (
-        f"'Global Blockbuster' (type=movie) must be absent when media_type=series, "
-        f"found in: {all_titles}"
-    )
-
-
-# ==========================================
-# STEPS (THEN) -- Quorum failure / empty result
-# ==========================================
-
-
-@then(
-    "the service processes the validation and identifies that no work reached the threshold"
-)
-def validate_threshold_failure(context):
-    assert context["response"].status_code == 200
-
-
-@then("returns an empty dataset instead of listing works with low quorum")
-def validate_empty_quorum_dataset(context):
-    data = context["response"].json()
-    top_rated = data.get("top_rated", [])
-    assert len(top_rated) == 0, (
-        f"Expected empty top_rated when all works are below quorum (review_count < 50), "
-        f"got: {top_rated}"
-    )
-
-
-@then(
-    'the system writes a "WARN: top_rated aggregation returned 0 items. '
-    'Quorum threshold not met for current period." record for monitoring.'
-)
-def validate_quorum_warn_log(context):
-    log_text = context.get("log_text", "")
-    assert "WARN: top_rated aggregation returned 0 items." in log_text, (
-        f"Expected quorum-warning log line from app.routers.home, "
-        f"captured log contained:\n{log_text}"
-    )
-
-
-# ==========================================
-# STEPS (THEN) -- Trending lock (period=all)
-# ==========================================
-
-
-@then("the trending list is still ranked by recent 30-day view activity")
-def validate_trending_still_temporal(context):
-    """Trending always uses recent_view_count -- period=all must not change that."""
-    assert context["response"].status_code == 200
-
-
-@then('the work "Viral Indie" should rank above "1990 Box Office Hit" in the trending list')
-def check_viral_indie_above_1990_hit(context):
-    data = context["response"].json()
-    trending = data.get("trending", [])
-    titles = [item["title"] for item in trending]
-
-    assert "Viral Indie" in titles, (
-        f"Expected 'Viral Indie' (recent_view_count=1000) in trending for period=all, "
-        f"got: {titles}"
-    )
-    if "1990 Box Office Hit" in titles:
-        assert titles.index("Viral Indie") < titles.index("1990 Box Office Hit"), (
-            "Viral Indie (recent_view_count=1000) must rank above "
-            "1990 Box Office Hit (recent_view_count=0) even when period=all"
-        )
-
-
-# ==========================================
-# STEPS (THEN) -- Period-aware Top Rated
-# ==========================================
-
-
-@then('the top_rated list ranks "Month Darling" above "Evergreen Classic"')
-def check_month_darling_above_evergreen(context):
-    data = context["response"].json()
-    titles = [item["title"] for item in data.get("top_rated", [])]
-
-    assert "Month Darling" in titles, (
-        f"Expected 'Month Darling' in top_rated, got: {titles}"
-    )
-    assert "Evergreen Classic" in titles, (
-        f"Expected 'Evergreen Classic' in top_rated, got: {titles}"
-    )
-    assert titles.index("Month Darling") < titles.index("Evergreen Classic"), (
-        "Month Darling (recent_avg_score=9.5) must rank above "
-        "Evergreen Classic (recent_avg_score=6.0) — top_rated is locked to the 30-day window"
-    )
 
 
 @then('the top_rated list ranks "Recent Sensation" above "All Time Legend"')
