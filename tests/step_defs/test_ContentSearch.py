@@ -15,20 +15,7 @@ FEATURE = "ContentSearch.feature"
 
 
 # --------------------------------------------------------------------------- #
-# Scenario bindings - Backend scenarios
-# --------------------------------------------------------------------------- #
-@scenario(FEATURE, "backend returns media when title matches query")
-def test_backend_returns_media_when_title_matches_query():
-    """backend returns media when title matches query."""
-
-
-@scenario(FEATURE, "backend returns empty results for non-existent term")
-def test_backend_returns_empty_results_for_nonexistent_term():
-    """backend returns empty results for non-existent term."""
-
-
-# --------------------------------------------------------------------------- #
-# Scenario bindings - Frontend scenarios (stub - tested via Cypress)
+# Scenario bindings
 # --------------------------------------------------------------------------- #
 @pytest.mark.skip(reason="Frontend scenario — tested via Cypress E2E")
 @scenario(FEATURE, "search content by exact match")
@@ -54,8 +41,100 @@ def test_search_content_by_title():
     """search content by title."""
 
 
+@scenario(FEATURE, "backend returns media when title matches query")
+def test_backend_returns_media_when_title_matches_query():
+    """backend returns media when title matches query."""
+
+
+@scenario(FEATURE, "backend returns empty results for non-existent term")
+def test_backend_returns_empty_results_for_nonexistent_term():
+    """backend returns empty results for non-existent term."""
+
+
 # --------------------------------------------------------------------------- #
-# Backend scenario - Given steps
+# Scenario: search content by exact match
+#   (the "given the system has some content stored" step below is shared by
+#    all four frontend scenarios)
+# --------------------------------------------------------------------------- #
+@given("the system has some content stored")
+def given_some_content_stored():
+    """the system has some content stored."""
+    raise NotImplementedError("Frontend scenario - tested via Cypress")
+
+
+@when('I search for the term "Avengers: Endgame"')
+def when_search_avengers_endgame():
+    """I search for the term "Avengers: Endgame"."""
+    raise NotImplementedError("Frontend scenario - tested via Cypress")
+
+
+@then("I can see the list of works that exactly match the searched term")
+def then_exact_match_list():
+    """I can see the list of works that exactly match the searched term."""
+    raise NotImplementedError("Frontend scenario - tested via Cypress")
+
+
+@then("the returned results contain works with the term in the title, synopsis or description")
+def then_results_in_title_synopsis_description():
+    """the returned results contain works with the term in the title, synopsis or description."""
+    raise NotImplementedError("Frontend scenario - tested via Cypress")
+
+
+# --------------------------------------------------------------------------- #
+# Scenario: search content with a spelling mistake
+# --------------------------------------------------------------------------- #
+@when('I search for the term "Avengrs"')
+def when_search_avengrs():
+    """I search for the term "Avengrs"."""
+    raise NotImplementedError("Frontend scenario - tested via Cypress")
+
+
+@then('I can see a "No results found" screen')
+def then_no_results_screen():
+    """I can see a "No results found" screen."""
+    raise NotImplementedError("Frontend scenario - tested via Cypress")
+
+
+@then("no works are returned for the searched term")
+def then_no_works_returned():
+    """no works are returned for the searched term."""
+    raise NotImplementedError("Frontend scenario - tested via Cypress")
+
+
+@then('I can still see the searched term "Avengrs" in the search bar')
+def then_term_in_search_bar():
+    """I can still see the searched term "Avengrs" in the search bar."""
+    raise NotImplementedError("Frontend scenario - tested via Cypress")
+
+
+# --------------------------------------------------------------------------- #
+# Scenario: search content with a non-existent term
+#   (reuses "I can see a 'No results found' screen" and
+#    "no works are returned for the searched term" defined above)
+# --------------------------------------------------------------------------- #
+@when('I search for the term "UnknownTitle123"')
+def when_search_unknown():
+    """I search for the term "UnknownTitle123"."""
+    raise NotImplementedError("Frontend scenario - tested via Cypress")
+
+
+# --------------------------------------------------------------------------- #
+# Scenario: search content by title
+# --------------------------------------------------------------------------- #
+@when('I search for the term "Titanic"')
+def when_search_titanic():
+    """I search for the term "Titanic"."""
+    raise NotImplementedError("Frontend scenario - tested via Cypress")
+
+
+@then("I can see works that match the searched term")
+def then_matching_works():
+    """I can see works that match the searched term."""
+    raise NotImplementedError("Frontend scenario - tested via Cypress")
+
+
+# --------------------------------------------------------------------------- #
+# Scenario: backend returns media when title matches query
 # --------------------------------------------------------------------------- #
 @given(parsers.parse('the system has a movie titled "{title}" stored in the database'))
 def given_movie_in_db(run, db, title):
@@ -99,9 +178,6 @@ def given_series_in_db(run, db, title):
     run(db.content.insert_one(media_doc))
 
 
-# --------------------------------------------------------------------------- #
-# Backend scenario - When steps
-# --------------------------------------------------------------------------- #
 @when(parsers.parse('the system processes a search query for "{query}"'), target_fixture="context")
 def when_search_query(client, context, query):
     """Execute search via the /search endpoint."""
@@ -110,9 +186,6 @@ def when_search_query(client, context, query):
     return context
 
 
-# --------------------------------------------------------------------------- #
-# Backend scenario - Then steps
-# --------------------------------------------------------------------------- #
 @then(parsers.parse('the search returns {count:d} results'))
 def then_search_returns_count(context, count):
     """Verify the number of search results."""
@@ -133,75 +206,7 @@ def then_results_include_title(context, title):
 
 
 # --------------------------------------------------------------------------- #
-# Frontend scenario - Given steps (stubs)
+# Scenario: backend returns empty results for non-existent term
+#   (reuses "the system has a movie titled..." given step and
+#    "the system processes a search query for..." when step defined above)
 # --------------------------------------------------------------------------- #
-@given("the system has some content stored")
-def given_some_content_stored():
-    """the system has some content stored."""
-    raise NotImplementedError("Frontend scenario - tested via Cypress")
-
-
-# --------------------------------------------------------------------------- #
-# Frontend scenario - When steps (stubs)
-# --------------------------------------------------------------------------- #
-@when('I search for the term "Avengers: Endgame"')
-def when_search_avengers_endgame():
-    """I search for the term "Avengers: Endgame"."""
-    raise NotImplementedError("Frontend scenario - tested via Cypress")
-
-
-@when('I search for the term "Avengrs"')
-def when_search_avengrs():
-    """I search for the term "Avengrs"."""
-    raise NotImplementedError("Frontend scenario - tested via Cypress")
-
-
-@when('I search for the term "Titanic"')
-def when_search_titanic():
-    """I search for the term "Titanic"."""
-    raise NotImplementedError("Frontend scenario - tested via Cypress")
-
-
-@when('I search for the term "UnknownTitle123"')
-def when_search_unknown():
-    """I search for the term "UnknownTitle123"."""
-    raise NotImplementedError("Frontend scenario - tested via Cypress")
-
-
-# --------------------------------------------------------------------------- #
-# Frontend scenario - Then steps (stubs)
-# --------------------------------------------------------------------------- #
-@then('I can see a "No results found" screen')
-def then_no_results_screen():
-    """I can see a "No results found" screen."""
-    raise NotImplementedError("Frontend scenario - tested via Cypress")
-
-
-@then("I can see the list of works that exactly match the searched term")
-def then_exact_match_list():
-    """I can see the list of works that exactly match the searched term."""
-    raise NotImplementedError("Frontend scenario - tested via Cypress")
-
-
-@then("I can see works that match the searched term")
-def then_matching_works():
-    """I can see works that match the searched term."""
-    raise NotImplementedError("Frontend scenario - tested via Cypress")
-
-
-@then('I can still see the searched term "Avengrs" in the search bar')
-def then_term_in_search_bar():
-    """I can still see the searched term "Avengrs" in the search bar."""
-    raise NotImplementedError("Frontend scenario - tested via Cypress")
-
-
-@then("no works are returned for the searched term")
-def then_no_works_returned():
-    """no works are returned for the searched term."""
-    raise NotImplementedError("Frontend scenario - tested via Cypress")
-
-
-@then("the returned results contain works with the term in the title, synopsis or description")
-def then_results_in_title_synopsis_description():
-    """the returned results contain works with the term in the title, synopsis or description."""
-    raise NotImplementedError("Frontend scenario - tested via Cypress")
